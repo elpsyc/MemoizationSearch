@@ -117,20 +117,58 @@ namespace nonstd {
 				return result;
 			}
 		}
+		inline void Clear() {return m_cache.Clear();}
 	};
 	template <typename R, typename... Args>
 	inline constexpr CachedFunction<R, Args...> makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
 		return CachedFunction<R, Args...>(std::move(func), time);
 	}
 }
+DWORD64 fib(DWORD64 n);
+static auto _fib = nonstd::makecached(fib);
 DWORD64 fib(DWORD64 n) {
-	static auto _fib = nonstd::makecached(fib);
 	if (n == 0) return 0;
 	if (n == 1) return 1;
 	return _fib(n - 1) + _fib(n - 2);
 }
+int gys(int x, int y)//gys:公约数
+{
+	int temp, z;
+	if (x == 0 && y != 0)
+		return y;
+	else if (x != 0 && y == 0)
+		return x;
+	else
+	{
+		if (x > y)
+		{
+			temp = x;
+			x = y;
+			y = temp;
+		}
+		z = x % y;
+		while (z != 0)
+		{
+			x = y;
+			y = z;
+			z = x % y;
+		}
+		return y;
+	}
+}int isprime(int n, int i) {
+	if (n == 1 || n == 0) return 0;
+	else if (n % i == 0) return 0;
+	else if (n % i != 0 && i == 2) return 1;
+	return isprime(n, i - 1);
+}
+
 int main(){
-	
-	std::cout << fib(1000) << std::endl;
+	std::vector<int> vec = { 1,2,3,4,5,6,7,8,9 };
+	//访问元素 类似数组 下标从0 开始
+	std::cout << vec.at(8) << std::endl;//输出 9
+	std::cout << vec[5] << std::endl;//输出 6 
+	std::cout << vec.front() << std::endl;//输出 1
+	std::cout << vec.back() << std::endl;//输出 9
+	int* rawdata = vec.data();//获取指向数组的指针
 	return 0;
 }
