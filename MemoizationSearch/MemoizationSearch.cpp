@@ -165,10 +165,10 @@ int gys(int x, int y)//gys:公约数
 int main(){
 	std::vector<int> vec = { 1,2,3,4,5,6,7,8,9 };
 	//访问元素 类似数组 下标从0 开始
-	std::cout << vec.at(8) << std::endl;//输出 9
-	std::cout << vec[5] << std::endl;//输出 6 
-	std::cout << vec.front() << std::endl;//输出 1
-	std::cout << vec.back() << std::endl;//输出 9
-	int* rawdata = vec.data();//获取指向数组的指针
+	std::cout << vec.at(8) << std::endl;	//输出 9
+	std::cout << vec[5] << std::endl;		//输出 6 
+	std::cout << vec.front() << std::endl;	//输出 1
+	std::cout << vec.back() << std::endl;	//输出 9
+	int* rawdata = vec.data();				//获取指向数组的指针
 	return 0;
 }
