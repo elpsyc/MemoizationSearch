@@ -60,17 +60,20 @@ namespace nonstd {
 			}
 			return ret;
 		}
-		inline iterator EraseCache(const _Tx& value) {
+		inline iterator erase(const _Tx& value) {
 			std::unique_lock<mutextype> lock(m_mutex);
 			auto iter = m_Cache.find(value);
 			iterator ret = m_Cache.end();
 			if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter);
 			return ret;
 		}
-		inline std::pair<iterator, bool> FindCache(const _Tx& _key) {
+		inline std::pair<iterator, bool> find(const _Tx& _key) {
 			if (m_Cache.empty()) return { iterator(),false };
 			auto iter = m_Cache.find(_key);
 			return { iter, iter != m_Cache.end() && iter->second.IsValid(std::chrono::system_clock::now()) };
+		}
+		inline std::pair<iterator, bool> operator[](const _Tx& _key) {
+			return find(_key);
 		}
 		inline void Clear() {
 			std::unique_lock<mutextype> lock(m_mutex);
@@ -122,51 +125,38 @@ namespace nonstd {
 		return makecached(std::function(std::move(func)), time);
 	}
 }
-DWORD64 fib(DWORD64 n);
-static auto _fib = nonstd::makecached(fib);
 DWORD64 fib(DWORD64 n) {
+	static auto _fib = nonstd::makecached(fib);
 	if (n == 0) return 0;
 	if (n == 1) return 1;
 	return _fib(n - 1) + _fib(n - 2);
 }
-int gys(int x, int y)//gys:公约数
-{
-	int temp, z;
-	if (x == 0 && y != 0)
-		return y;
-	else if (x != 0 && y == 0)
-		return x;
-	else
-	{
-		if (x > y)
-		{
-			temp = x;
-			x = y;
-			y = temp;
-		}
-		z = x % y;
-		while (z != 0)
-		{
-			x = y;
-			y = z;
-			z = x % y;
-		}
-		return y;
-	}
-}int isprime(int n, int i) {
-	if (n == 1 || n == 0) return 0;
-	else if (n % i == 0) return 0;
-	else if (n % i != 0 && i == 2) return 1;
-	return isprime(n, i - 1);
+
+HANDLE processHandle = GetCurrentProcess();
+
+template<class T>
+T read(DWORD64 addr) {
+	static int count = 0;
+	printf("第 %d 次调用 read 函数\n", ++count);
+	T buf{};
+	SIZE_T lpRet = 0;
+	ReadProcessMemory(processHandle, (LPVOID)addr, &buf, sizeof(T), &lpRet);
+	return buf;
 }
 
+template<class T> T ReadCache(DWORD64 addr) {
+	static auto cachedfunc = nonstd::makecached([&](DWORD64 addr)->T {
+		
+		return read<T>(addr);
+	});
+	return cachedfunc(addr);
+}
+int value = 65;
 int main(){
-	std::vector<int> vec = { 1,2,3,4,5,6,7,8,9 };
-	//访问元素 类似数组 下标从0 开始
-	std::cout << vec.at(8) << std::endl;	//输出 9
-	std::cout << vec[5] << std::endl;		//输出 6 
-	std::cout << vec.front() << std::endl;	//输出 1
-	std::cout << vec.back() << std::endl;	//输出 9
-	int* rawdata = vec.data();				//获取指向数组的指针
+
+	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
+	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
+	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
+	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
 	return 0;
 }
