@@ -42,8 +42,7 @@ namespace nonstd {
 			if (lb != m_Cache.end()) {
 				lb->second = newValue;
 				ret = lb;
-			}
-			else {
+			}else {
 				lock.lock();
 				ret = m_Cache.insert(lb, pair_type(_key, newValue));
 				lock.unlock();
@@ -146,7 +145,6 @@ T read(DWORD64 addr) {
 
 template<class T> T ReadCache(DWORD64 addr) {
 	static auto cachedfunc = nonstd::makecached([&](DWORD64 addr)->T {
-		
 		return read<T>(addr);
 	});
 	return cachedfunc(addr);
