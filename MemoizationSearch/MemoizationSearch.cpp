@@ -96,32 +96,30 @@ namespace nonstd {
 	class CachedFunction final {
 	private:
 		std::function<R(Args...)> m_func;
-		using KeyType = std::tuple<std::decay_t<Args>...>;
-		using PairType = std::pair<R, std::tuple<std::decay_t<Args>...>>;
-		SimpleCache<KeyType, PairType> m_cache;
+		SimpleCache<std::tuple<std::decay_t<Args>...>, R> m_cache;
 		DWORD m_Cachevalidtime;
 	public:
 		CachedFunction() = default;
+		~CachedFunction() { m_cache.Clear(); }
 		CachedFunction(CachedFunction&& other) noexcept : m_func(std::move(other.m_func)), m_cache(std::move(other.m_cache)), m_Cachevalidtime(other.m_Cachevalidtime) {}
 		explicit CachedFunction(const std::function<R(Args...)>& func, DWORD validTime = CacheNormalTTL) : m_func(func), m_Cachevalidtime(validTime) {}
 		inline constexpr R operator()(Args&&... args) noexcept {
 			auto key = std::make_tuple(std::forward<Args>(args)...);
-			auto [it, ishit] = m_cache.FindCache(key);
-			if (ishit) {
-				auto [result, cached_args] = it->second.m_value;
-				return result;
-			}
-			else {
-				R result = m_func(std::forward<Args>(args)...);
-				m_cache.AddCache(std::move(key), std::make_pair(result, std::make_tuple(std::forward<Args>(args)...)), m_Cachevalidtime);
-				return result;
-			}
+			auto [it, ishit] = m_cache.find(key);
+			return ((ishit) ? it : m_cache.AddCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
 		}
-		inline void Clear() {return m_cache.Clear();}
+		inline constexpr R operator()(Args&... args) noexcept { return this->operator()(std::forward<Args>(args)...); }
+		inline void clear() { return m_cache.Clear(); }
+		inline void setCacheTime(DWORD time) const { m_Cachevalidtime = time; }
 	};
-	template <typename R, typename... Args>
-	inline constexpr CachedFunction<R, Args...> makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
+	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
 		return CachedFunction<R, Args...>(std::move(func), time);
+	}
+	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(std::function<R(Args...)> func, DWORD time = CacheNormalTTL)noexcept {
+		return CachedFunction<R, Args...>(std::move(func), time);
+	}
+	template <typename F> inline constexpr decltype(auto) makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
+		return makecached(std::function(std::move(func)), time);
 	}
 }
 DWORD64 fib(DWORD64 n);
