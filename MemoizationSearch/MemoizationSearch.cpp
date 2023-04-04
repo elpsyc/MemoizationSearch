@@ -124,13 +124,20 @@ namespace nonstd {
 		return makecached(std::function(std::move(func)), time);
 	}
 }
-DWORD64 fib(DWORD64 n) {
-	static auto _fib = nonstd::makecached(fib);
-	if (n == 0) return 0;
-	if (n == 1) return 1;
-	return _fib(n - 1) + _fib(n - 2);
-}
 
+template<class _PRE>
+float Test_Speed(int Times, _PRE bin) {
+	DWORD time1 = clock();
+	float count = 0;
+	while (count < Times) {
+		bin();
+		count++;
+	}
+	float elpstime = clock() - (float)time1;
+	auto total = count / (elpstime / 1000.0f);
+	printf("Speed: %0.0f/s\r\n", total);
+	return total;
+}
 HANDLE processHandle = GetCurrentProcess();
 
 template<class T>
@@ -149,12 +156,11 @@ template<class T> T ReadCache(DWORD64 addr) {
 	});
 	return cachedfunc(addr);
 }
-int value = 65;
+int testdata = 996;
 int main(){
 
-	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
-	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
-	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
-	std::cout << ReadCache<int>((DWORD64)&value)<<std::endl;
+	Test_Speed(1e+7, [&]() {
+		ReadCache<int>((DWORD64)&testdata);
+	});
 	return 0;
 }
