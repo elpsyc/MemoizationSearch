@@ -26,52 +26,62 @@ namespace nonstd {
 		concurrent_map<_Tx, CacheItem<_Ty>> m_Cache;
 		using pair_type = typename std::decay_t<decltype(m_Cache)>::value_type;
 		using iterator = typename std::decay_t<decltype(m_Cache)>::iterator;
-		mutable std::mutex m_mutex;
+		mutable std::shared_mutex m_mutex;
 		using mutextype = decltype(m_mutex);
 		SimpleBasicCache() { srand((unsigned int)time(0)); }
 		~SimpleBasicCache()noexcept {
 			std::unique_lock<mutextype> lock(m_mutex);
 			m_Cache.clear();
 		}
-		inline iterator AddCache(const _Tx& _key, const _Ty& _value, DWORD _validtime = 200) {
-			auto nowTime = std::chrono::system_clock::now();
-			auto newValue = CacheItem<_Ty>(_value, nowTime + std::chrono::milliseconds(_validtime + rand() % 30));
-			std::unique_lock<mutextype> lock(m_mutex, std::defer_lock);
-			auto lb = m_Cache.find(_key);
-			iterator ret = m_Cache.end();
-			if (lb != m_Cache.end()) {
-				lb->second = newValue;
-				ret = lb;
-			}else {
-				lock.lock();
-				ret = m_Cache.insert(lb, pair_type(_key, newValue));
-				lock.unlock();
-			}
-			static auto firsttime = std::chrono::system_clock::now();
-			auto now = std::chrono::system_clock::now();
-			if (std::chrono::duration_cast<std::chrono::milliseconds>(now - firsttime).count() > 5000) {
-				lock.lock();
-				firsttime = now;
-				for (auto it = m_Cache.begin(); it != m_Cache.end();) {
-					it = (!it->second.IsValid(now)) ? m_Cache.unsafe_erase(it) : ++it;
+		inline iterator AddAysncCache(const _Tx& _key, const _Ty& _value, DWORD _validtime = 200) {
+			return std::async(std::launch::async, [&]()->iterator {
+				auto nowTime = std::chrono::system_clock::now();
+				auto newValue = CacheItem<_Ty>(_value, nowTime + std::chrono::milliseconds(_validtime + rand() % 30));
+				std::unique_lock<mutextype> lock(m_mutex, std::defer_lock);
+				auto lb = m_Cache.find(_key);
+				iterator ret = m_Cache.end();
+				if (lb != m_Cache.end()) {
+					lb->second = newValue;
+					ret = lb;
 				}
-				lock.unlock();
-			}
-			return ret;
+				else {
+					if (lock.try_lock()) {
+						ret = m_Cache.insert(lb, pair_type(_key, newValue));
+						lock.unlock();
+					}
+				}
+				static auto firsttime = std::chrono::system_clock::now();
+				auto now = std::chrono::system_clock::now();
+				if (std::chrono::duration_cast<std::chrono::milliseconds>(now - firsttime).count() > 5000) {
+					firsttime = now;
+					if (lock.try_lock()) {
+						for (auto it = m_Cache.begin(); it != m_Cache.end();) {
+							it = (!it->second.IsValid(now)) ? m_Cache.unsafe_erase(it) : ++it;
+						}
+						lock.unlock();
+					}
+				}
+				return ret;
+				}).get();
 		}
 		inline iterator erase(const _Tx& value) {
-			std::unique_lock<mutextype> lock(m_mutex);
+			std::shared_lock lock(m_mutex);
 			auto iter = m_Cache.find(value);
 			iterator ret = m_Cache.end();
-			if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter);
-			return ret;
+			std::unique_lock<mutextype> ulock(m_mutex, std::defer_lock);
+			if (ulock.try_lock()) {
+				if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter);
+				lock.unlock();
+				return ret;
+			}
+			return (iterator)m_Cache.end();
 		}
 		inline std::pair<iterator, bool> find(const _Tx& _key) {
 			if (m_Cache.empty()) return { iterator(),false };
 			auto iter = m_Cache.find(_key);
 			return { iter, iter != m_Cache.end() && iter->second.IsValid(std::chrono::system_clock::now()) };
 		}
-		inline std::pair<iterator, bool> operator[](const _Tx& _key) {
+		inline std::pair<iterator, bool>& operator[](const _Tx& _key) {
 			return find(_key);
 		}
 		inline void Clear() {
