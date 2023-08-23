@@ -44,8 +44,7 @@ namespace nonstd {
 				if (lb != m_Cache.end()) {
 					lb->second = newValue;
 					ret = lb;
-				}
-				else {
+				}else {
 					if (lock.try_lock()) {
 						ret = m_Cache.insert(lb, pair_type(_key, newValue));
 						lock.unlock();
