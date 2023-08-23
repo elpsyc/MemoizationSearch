@@ -2,6 +2,7 @@
 #include <concurrent_unordered_map.h>
 #include <shared_mutex>
 #include <vector>
+#include<future>
 #include <functional>
 #include <Windows.h>
 #include <iostream>
@@ -118,7 +119,7 @@ namespace nonstd {
 		inline constexpr R operator()(Args&&... args) noexcept {
 			auto key = std::make_tuple(std::forward<Args>(args)...);
 			auto [it, ishit] = m_cache.find(key);
-			return ((ishit) ? it : m_cache.AddCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
+			return ((ishit) ? it : m_cache.AddAysncCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
 		}
 		inline constexpr R operator()(Args&... args) noexcept { return this->operator()(std::forward<Args>(args)...); }
 		inline void clear() { return m_cache.Clear(); }
