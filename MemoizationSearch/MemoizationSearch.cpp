@@ -18,6 +18,7 @@ namespace nonstd {
 		_Tx   m_value;
 		CacheItem() = default;
 		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
+		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
 		~CacheItem() { m_value.~_Tx(); }
 		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }
 	};
