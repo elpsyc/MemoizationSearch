@@ -16,9 +16,13 @@ namespace nonstd {
 		using timepoint = std::chrono::time_point<std::chrono::system_clock>;
 		timepoint m_endtime;
 		_Tx   m_value;
+		//默认构造函数
 		CacheItem() = default;
+		//拷贝构造函数
 		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
+		//移动构造函数
 		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
+		//析构函数
 		~CacheItem() { m_value.~_Tx(); }
 		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }
 	};
