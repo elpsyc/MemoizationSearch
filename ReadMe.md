@@ -12,6 +12,7 @@
 提高效率：避免了重复计算，减少了算法的时间复杂度，从而提高了算法的执行效率。
 简化递归算法：使递归算法更易于理解和实现，因为不需要担心重复计算的问题。
 记忆化搜索常用于解决动态规划、图搜索等问题，在这些问题中，递归算法往往会出现大量的重复计算。通过应用记忆化搜索技术，可以将算法的时间复杂度从指数级别降低到多项式级别，从而大大提高了算法的实用性和效率。
+
 Memorization search is an optimization technique used to improve the efficiency of recursive algorithms. It avoids duplicate calculations by storing the results of previous calculations, thus achieving higher efficiency in recursive algorithms.
 
 
