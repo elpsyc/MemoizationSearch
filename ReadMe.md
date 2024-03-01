@@ -1,22 +1,48 @@
 # MemoizationSearch
 
-## ¼ò½é
-¼ÇÒä»¯ËÑË÷Ä£°å
+## ç®€ä»‹
+è®°å¿†åŒ–æœç´¢ï¼ˆMemoizationï¼‰æ˜¯ä¸€ç§ä¼˜åŒ–æŠ€æœ¯ï¼Œç”¨äºæé«˜é€’å½’ç®—æ³•çš„æ•ˆç‡ã€‚å®ƒé€šè¿‡å­˜å‚¨å…ˆå‰è®¡ç®—çš„ç»“æœæ¥é¿å…é‡å¤è®¡ç®—ï¼Œä»è€Œåœ¨é€’å½’ç®—æ³•ä¸­å®ç°æ›´é«˜çš„æ•ˆç‡ã€‚
+
+åœ¨é€’å½’ç®—æ³•ä¸­ï¼Œå¯èƒ½ä¼šå‡ºç°å¤§é‡çš„é‡å¤è®¡ç®—ï¼Œè¿™æ˜¯å› ä¸ºåœ¨é€’å½’è°ƒç”¨è¿‡ç¨‹ä¸­ï¼ŒåŒæ ·çš„è¾“å…¥å‚æ•°å¯èƒ½ä¼šå¯¼è‡´é‡å¤çš„è®¡ç®—è·¯å¾„ã€‚è®°å¿†åŒ–æœç´¢é€šè¿‡å°†ä¸­é—´ç»“æœä¿å­˜èµ·æ¥ï¼Œåœ¨éœ€è¦æ—¶ç›´æ¥æŸ¥è¡¨è·å–ç»“æœï¼Œä»è€Œé¿å…äº†é‡å¤è®¡ç®—ã€‚
+
+è®°å¿†åŒ–æœç´¢é€šå¸¸é€šè¿‡ä½¿ç”¨æ•°ç»„ã€å“ˆå¸Œè¡¨æˆ–å…¶ä»–æ•°æ®ç»“æ„æ¥å­˜å‚¨å·²ç»è®¡ç®—è¿‡çš„ç»“æœã€‚å½“é€’å½’å‡½æ•°è¢«è°ƒç”¨æ—¶ï¼Œé¦–å…ˆæ£€æŸ¥ç»“æœæ˜¯å¦å·²ç»å­˜åœ¨äºå­˜å‚¨ä¸­ï¼Œå¦‚æœå­˜åœ¨åˆ™ç›´æ¥è¿”å›ç»“æœï¼Œå¦åˆ™è¿›è¡Œè®¡ç®—å¹¶å°†ç»“æœå­˜å‚¨èµ·æ¥ä»¥å¤‡åç»­ä½¿ç”¨ã€‚
+
+è®°å¿†åŒ–æœç´¢çš„ä¼˜ç‚¹åŒ…æ‹¬ï¼š
+
+æé«˜æ•ˆç‡ï¼šé¿å…äº†é‡å¤è®¡ç®—ï¼Œå‡å°‘äº†ç®—æ³•çš„æ—¶é—´å¤æ‚åº¦ï¼Œä»è€Œæé«˜äº†ç®—æ³•çš„æ‰§è¡Œæ•ˆç‡ã€‚
+ç®€åŒ–é€’å½’ç®—æ³•ï¼šä½¿é€’å½’ç®—æ³•æ›´æ˜“äºç†è§£å’Œå®ç°ï¼Œå› ä¸ºä¸éœ€è¦æ‹…å¿ƒé‡å¤è®¡ç®—çš„é—®é¢˜ã€‚
+è®°å¿†åŒ–æœç´¢å¸¸ç”¨äºè§£å†³åŠ¨æ€è§„åˆ’ã€å›¾æœç´¢ç­‰é—®é¢˜ï¼Œåœ¨è¿™äº›é—®é¢˜ä¸­ï¼Œé€’å½’ç®—æ³•å¾€å¾€ä¼šå‡ºç°å¤§é‡çš„é‡å¤è®¡ç®—ã€‚é€šè¿‡åº”ç”¨è®°å¿†åŒ–æœç´¢æŠ€æœ¯ï¼Œå¯ä»¥å°†ç®—æ³•çš„æ—¶é—´å¤æ‚åº¦ä»æŒ‡æ•°çº§åˆ«é™ä½åˆ°å¤šé¡¹å¼çº§åˆ«ï¼Œä»è€Œå¤§å¤§æé«˜äº†ç®—æ³•çš„å®ç”¨æ€§å’Œæ•ˆç‡ã€‚
+Memorization search is an optimization technique used to improve the efficiency of recursive algorithms. It avoids duplicate calculations by storing the results of previous calculations, thus achieving higher efficiency in recursive algorithms.
 
 
-### ±àÒë»·¾³
-Visual Studio 2019ÒÔÉÏIDE
-ÏîÄ¿Ê¹ÓÃC++20±ê×¼ 
-
-### ×¢Òâ
-1. ·²ÊÇ´øÓĞÏÂ»®ÏßµÄº¯Êı¶¼ÊÇÄÚ²¿º¯Êı,²»Òª½¨ÒéÖ±½Óµ÷ÓÃ µ÷ÓÃÇ°ÇëÔÄ¶ÁÔ´´úÂëÒÔ±ÜÃâÀí½â´íÎó
+In recursive algorithms, there may be a large number of duplicate calculations, as the same input parameters may lead to duplicate calculation paths during recursive calls. Memory based search saves intermediate results and directly looks them up in a table when needed, thus avoiding duplicate calculations.
 
 
-### 3.ÃâÔğÉùÃ÷
-¸Ã¿ªÔ´ÏîÄ¿£¨ÒÔÏÂ¼ò³Æ¡°±¾ÏîÄ¿¡±£©ÊÇÓÉ¿ª·¢ÕßÎŞ³¥Ìá¹©µÄ£¬²¢»ùÓÚ¿ª·ÅÔ´´úÂëĞí¿ÉĞ­Òé·¢²¼¡£±¾ÏîÄ¿½ö¹©²Î¿¼ºÍÑ§Ï°Ê¹ÓÃ£¬Ê¹ÓÃÕßÓ¦¸Ã×ÔĞĞ³Ğµ£·çÏÕ¡£
+Memory based search typically stores computed results by using arrays, hash tables, or other data structures. When a recursive function is called, the first step is to check if the result already exists in the storage. If it exists, the result is returned directly. Otherwise, the calculation is performed and the result is stored for future use.
 
-±¾ÏîÄ¿Ã»ÓĞÈÎºÎÃ÷Ê¾»ò°µÊ¾µÄ±£Ö¤£¬°üÀ¨µ«²»ÏŞÓÚÊÊÏúĞÔ¡¢ÌØ¶¨ÓÃÍ¾ÊÊÓÃĞÔºÍ·ÇÇÖÈ¨ĞÔ¡£¿ª·¢Õß²»±£Ö¤±¾ÏîÄ¿µÄ¹¦ÄÜ·ûºÏÄúµÄĞèÇó£¬Ò²²»±£Ö¤±¾ÏîÄ¿µÄ²Ù×÷²»»áÖĞ¶Ï»ò´íÎó¡£
 
-ÔÚÈÎºÎÇé¿öÏÂ£¬¿ª·¢Õß¶¼²»³Ğµ£ÓÉÊ¹ÓÃ±¾ÏîÄ¿¶øµ¼ÖÂµÄÈÎºÎÖ±½Ó¡¢¼ä½Ó¡¢Å¼È»¡¢ÌØÊâ»òºó¹ûĞÔËğÊ§£¬°üÀ¨µ«²»ÏŞÓÚÉÌÒµÀûÈóµÄËğÊ§£¬ÎŞÂÛÕâĞ©ËğÊ§ÊÇÓÉºÏÍ¬¡¢ÇÖÈ¨ĞĞÎª»¹ÊÇÆäËûÔ­ÒòÔì³ÉµÄ£¬¼´Ê¹¿ª·¢ÕßÒÑ±»¸æÖª´ËÀàËğÊ§µÄ¿ÉÄÜĞÔ¡£
+The advantages of memory based search include:
 
-Ê¹ÓÃ±¾ÏîÄ¿¼´±íÊ¾ÄúÒÑ¾­ÔÄ¶Á²¢Í¬Òâ×ñÊØ´ËÃâÔğÉùÃ÷¡£Èç¹ûÄú²»Í¬Òâ´ËÃâÔğÉùÃ÷£¬Çë²»ÒªÊ¹ÓÃ±¾ÏîÄ¿¡£¿ª·¢Õß±£ÁôËæÊ±¸ü¸Ä´ËÃâÔğÉùÃ÷µÄÈ¨Àû£¬Ë¡²»ÁíĞĞÍ¨Öª¡£
+
+Improving efficiency: avoids duplicate calculations, reduces the time complexity of the algorithm, and thus improves the execution efficiency of the algorithm.
+
+Simplify recursive algorithms: make recursive algorithms easier to understand and implement, as there is no need to worry about duplicate calculations.
+
+Memory based search is commonly used to solve problems such as dynamic programming and graph search, where recursive algorithms often result in a large number of repeated computations. By applying memory search technology, the time complexity of the algorithm can be reduced from exponential level to polynomial level, greatly improving the practicality and efficiency of the algorithm.
+
+### ç¼–è¯‘ç¯å¢ƒ
+Visual Studio 2019ä»¥ä¸ŠIDE
+é¡¹ç›®ä½¿ç”¨C++20æ ‡å‡† 
+
+### æ³¨æ„
+1. å‡¡æ˜¯å¸¦æœ‰ä¸‹åˆ’çº¿çš„å‡½æ•°éƒ½æ˜¯å†…éƒ¨å‡½æ•°,ä¸è¦å»ºè®®ç›´æ¥è°ƒç”¨ è°ƒç”¨å‰è¯·é˜…è¯»æºä»£ç ä»¥é¿å…ç†è§£é”™è¯¯
+
+
+### 3.å…è´£å£°æ˜
+è¯¥å¼€æºé¡¹ç›®ï¼ˆä»¥ä¸‹ç®€ç§°â€œæœ¬é¡¹ç›®â€ï¼‰æ˜¯ç”±å¼€å‘è€…æ— å¿æä¾›çš„ï¼Œå¹¶åŸºäºå¼€æ”¾æºä»£ç è®¸å¯åè®®å‘å¸ƒã€‚æœ¬é¡¹ç›®ä»…ä¾›å‚è€ƒå’Œå­¦ä¹ ä½¿ç”¨ï¼Œä½¿ç”¨è€…åº”è¯¥è‡ªè¡Œæ‰¿æ‹…é£é™©ã€‚
+
+æœ¬é¡¹ç›®æ²¡æœ‰ä»»ä½•æ˜ç¤ºæˆ–æš—ç¤ºçš„ä¿è¯ï¼ŒåŒ…æ‹¬ä½†ä¸é™äºé€‚é”€æ€§ã€ç‰¹å®šç”¨é€”é€‚ç”¨æ€§å’Œéä¾µæƒæ€§ã€‚å¼€å‘è€…ä¸ä¿è¯æœ¬é¡¹ç›®çš„åŠŸèƒ½ç¬¦åˆæ‚¨çš„éœ€æ±‚ï¼Œä¹Ÿä¸ä¿è¯æœ¬é¡¹ç›®çš„æ“ä½œä¸ä¼šä¸­æ–­æˆ–é”™è¯¯ã€‚
+
+åœ¨ä»»ä½•æƒ…å†µä¸‹ï¼Œå¼€å‘è€…éƒ½ä¸æ‰¿æ‹…ç”±ä½¿ç”¨æœ¬é¡¹ç›®è€Œå¯¼è‡´çš„ä»»ä½•ç›´æ¥ã€é—´æ¥ã€å¶ç„¶ã€ç‰¹æ®Šæˆ–åæœæ€§æŸå¤±ï¼ŒåŒ…æ‹¬ä½†ä¸é™äºå•†ä¸šåˆ©æ¶¦çš„æŸå¤±ï¼Œæ— è®ºè¿™äº›æŸå¤±æ˜¯ç”±åˆåŒã€ä¾µæƒè¡Œä¸ºè¿˜æ˜¯å…¶ä»–åŸå› é€ æˆçš„ï¼Œå³ä½¿å¼€å‘è€…å·²è¢«å‘ŠçŸ¥æ­¤ç±»æŸå¤±çš„å¯èƒ½æ€§ã€‚
+
+ä½¿ç”¨æœ¬é¡¹ç›®å³è¡¨ç¤ºæ‚¨å·²ç»é˜…è¯»å¹¶åŒæ„éµå®ˆæ­¤å…è´£å£°æ˜ã€‚å¦‚æœæ‚¨ä¸åŒæ„æ­¤å…è´£å£°æ˜ï¼Œè¯·ä¸è¦ä½¿ç”¨æœ¬é¡¹ç›®ã€‚å¼€å‘è€…ä¿ç•™éšæ—¶æ›´æ”¹æ­¤å…è´£å£°æ˜çš„æƒåˆ©ï¼Œæ•ä¸å¦è¡Œé€šçŸ¥ã€‚
