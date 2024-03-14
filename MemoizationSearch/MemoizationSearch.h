@@ -153,7 +153,7 @@ namespace nonstd {
 	};
 	class CachedFunctionFactory {
 	private:
-		static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> cache_;
+		static concurrent_map<std::type_index, concurrent_map<void*, std::shared_ptr<void>>> cache_;
 	public:
 		template <typename R, typename... Args>
 		static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) {
@@ -170,7 +170,7 @@ namespace nonstd {
 			cache_.clear();
 		}
 	};
-	std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> CachedFunctionFactory::cache_;
+	concurrent_map<std::type_index, concurrent_map<void*, std::shared_ptr<void>>> CachedFunctionFactory::cache_;
 	template <typename R, typename... Args>
 	inline CachedFunction<R, Args...>& makecached(R(*func)(Args...), DWORD time = nonstd::CacheNormalTTL) noexcept {
 		return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time);
