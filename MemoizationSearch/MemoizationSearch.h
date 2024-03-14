@@ -119,8 +119,8 @@ namespace nonstd {
 		explicit CachedFunction(const std::function<R(Args...)>& func, DWORD validTime = CacheNormalTTL) : m_func(func), m_Cachevalidtime(validTime) {}
 		inline constexpr R operator()(Args&&... args) noexcept {
 			auto key = std::make_tuple(std::forward<Args>(args)...);
-			auto [it, ishit] = m_cache.find(key);
-			return ((ishit) ? it : m_cache.AddAysncCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
+			auto [it, hit] = m_cache.find(key);
+			return ((hit) ? it : m_cache.AddAysncCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
 		}
 		inline constexpr R operator()(Args&... args) noexcept { return this->operator()(std::forward<Args>(args)...); }
 		inline void clear() { return m_cache.Clear(); }
