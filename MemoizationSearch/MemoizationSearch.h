@@ -135,14 +135,6 @@ namespace nonstd {
 			auto argsTuple = std::make_tuple(args...);
 			return callFunctionAndCache(argsTuple);
 		}
-		R operator()() const {
-			if constexpr (sizeof...(Args) == 0) {
-				std::tuple<> argsTuple;
-				return callFunctionAndCache(argsTuple);
-			}else {
-				static_assert(sizeof...(Args) == 0, "This function can only be called with no arguments.");
-			}
-		}
 		void setCacheTime(DWORD cacheTime) {
 			cacheTime_ = cacheTime;
 		}
@@ -185,7 +177,7 @@ namespace nonstd {
 		return CachedFunctionFactory::GetCachedFunction(&tempfunc, tempfunc, time);
 	}
 }
-/*
+/*注意本类只对有参数的函数有效
 * 旨在减少重复计算的开销，特别是对于那些计算成本较高的函数。它使用模板和高级C++特性，包括并发容器、智能指针、类型推导和lambda表达式。下面是对代码主要部分的逐一解释：
 
 1. CacheItem 类
