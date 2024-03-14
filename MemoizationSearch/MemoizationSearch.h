@@ -21,7 +21,7 @@ namespace nonstd {
 		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
 		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
 		~CacheItem() { m_value.~_Tx(); }
-		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }
+		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }//因为重载bool是不能有参数的
 	};
 	template<typename _Tx, typename _Ty>
 	class SimpleBasicCache {
@@ -119,7 +119,7 @@ namespace nonstd {
 		CachedFunction(CachedFunction&&) = delete;
 		CachedFunction& operator=(CachedFunction&&) = delete;
 		template<typename... T>
-		R callFunctionAndCache(std::tuple<T...> argsTuple) const {
+		R callFunctionAndCache(const std::tuple<T...>& argsTuple) const {
 			auto now = std::chrono::steady_clock::now();
 			if (auto it = expiry_.find(argsTuple); it != expiry_.end() && it->second > now) {
 				return cache_[argsTuple];
