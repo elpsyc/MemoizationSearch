@@ -16,6 +16,21 @@
 ## 记忆化搜索的应用
 记忆化搜索在许多领域都有广泛的应用，包括计算机图形学、人工智能、生物信息学和网络优化。在这些领域，记忆化搜索被用来解决各种复杂的优化问题，如路径规划、序列对齐和图像重建。
 
+```c++
+#include <iostream>
+#include"MemoizationSearch.h"
+//斐波那契数列的缓存搜索
+__int64 Fibonacci(int n) {
+	if (n <= 1) return n;
+	//利用nonstd::makecached函数生成一个缓存搜索的函数
+	static auto fib = nonstd::makecached(Fibonacci);
+	return fib(n - 1) + fib(n - 2);
+}
+int main(){
+	std::cout << Fibonacci(10);
+	return 0;
+}
+```
 
 ### 编译环境
 Visual Studio 2019以上IDE
