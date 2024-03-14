@@ -1,35 +1,36 @@
 # MemoizationSearch
 
 ## 简介
-记忆化搜索（Memoization）是一种优化技术，用于提高递归算法的效率。它通过存储先前计算的结果来避免重复计算，从而在递归算法中实现更高的效率。
+## 记忆化搜索模板
+记忆化搜索：一种高效的搜索模式
+在计算机科学中，记忆化搜索是一种优化技术，它通过存储昂贵的函数调用结果并在后续调用中重用它们，从而提高算法的运行速度。这种方法是动态规划和分治策略的一个重要组成部分，可以显著提高这些算法的性能。
 
-在递归算法中，可能会出现大量的重复计算，这是因为在递归调用过程中，同样的输入参数可能会导致重复的计算路径。记忆化搜索通过将中间结果保存起来，在需要时直接查表获取结果，从而避免了重复计算。
+## 记忆化搜索的工作原理
+记忆化搜索的基本思想是将已解决的子问题的解决方案存储在一个表中，然后在需要时查找这些解决方案，而不是重新计算它们。这种方法在处理具有重叠子问题的问题时特别有效，因为它可以避免不必要的重复计算。
 
-记忆化搜索通常通过使用数组、哈希表或其他数据结构来存储已经计算过的结果。当递归函数被调用时，首先检查结果是否已经存在于存储中，如果存在则直接返回结果，否则进行计算并将结果存储起来以备后续使用。
+例如，考虑斐波那契数列的计算。传统的递归方法会导致大量的重复计算，因为每个数字的计算都依赖于前两个数字的计算。通过使用记忆化搜索，我们可以将每个数字的计算结果存储在一个表中，然后在计算新数字时直接查找这些结果，从而避免了重复计算。
 
-记忆化搜索的优点包括：
+## 记忆化搜索的优点
+记忆化搜索的主要优点是它可以显著提高算法的运行速度。通过避免不必要的重复计算，记忆化搜索可以将指数级的时间复杂度降低到多项式级别。此外，记忆化搜索还可以提高算法的空间效率，因为它只需要存储已解决的子问题的解决方案，而不是所有可能的子问题。
 
-提高效率：避免了重复计算，减少了算法的时间复杂度，从而提高了算法的执行效率。
-简化递归算法：使递归算法更易于理解和实现，因为不需要担心重复计算的问题。
-记忆化搜索常用于解决动态规划、图搜索等问题，在这些问题中，递归算法往往会出现大量的重复计算。通过应用记忆化搜索技术，可以将算法的时间复杂度从指数级别降低到多项式级别，从而大大提高了算法的实用性和效率。
+## 记忆化搜索的应用
+记忆化搜索在许多领域都有广泛的应用，包括计算机图形学、人工智能、生物信息学和网络优化。在这些领域，记忆化搜索被用来解决各种复杂的优化问题，如路径规划、序列对齐和图像重建。
 
-Memorization search is an optimization technique used to improve the efficiency of recursive algorithms. It avoids duplicate calculations by storing the results of previous calculations, thus achieving higher efficiency in recursive algorithms.
-
-
-In recursive algorithms, there may be a large number of duplicate calculations, as the same input parameters may lead to duplicate calculation paths during recursive calls. Memory based search saves intermediate results and directly looks them up in a table when needed, thus avoiding duplicate calculations.
-
-
-Memory based search typically stores computed results by using arrays, hash tables, or other data structures. When a recursive function is called, the first step is to check if the result already exists in the storage. If it exists, the result is returned directly. Otherwise, the calculation is performed and the result is stored for future use.
-
-
-The advantages of memory based search include:
-
-
-Improving efficiency: avoids duplicate calculations, reduces the time complexity of the algorithm, and thus improves the execution efficiency of the algorithm.
-
-Simplify recursive algorithms: make recursive algorithms easier to understand and implement, as there is no need to worry about duplicate calculations.
-
-Memory based search is commonly used to solve problems such as dynamic programming and graph search, where recursive algorithms often result in a large number of repeated computations. By applying memory search technology, the time complexity of the algorithm can be reduced from exponential level to polynomial level, greatly improving the practicality and efficiency of the algorithm.
+```c++
+#include <iostream>
+#include"MemoizationSearch.h"
+//斐波那契数列的缓存搜索
+__int64 Fibonacci(int n) {
+	if (n <= 1) return n;
+	//利用nonstd::makecached函数生成一个缓存搜索的函数
+	static auto fib = nonstd::makecached(Fibonacci);
+	return fib(n - 1) + fib(n - 2);
+}
+int main(){
+	std::cout << Fibonacci(10);
+	return 0;
+}
+```
 
 ### 编译环境
 Visual Studio 2019以上IDE
@@ -47,3 +48,28 @@ Visual Studio 2019以上IDE
 在任何情况下，开发者都不承担由使用本项目而导致的任何直接、间接、偶然、特殊或后果性损失，包括但不限于商业利润的损失，无论这些损失是由合同、侵权行为还是其他原因造成的，即使开发者已被告知此类损失的可能性。
 
 使用本项目即表示您已经阅读并同意遵守此免责声明。如果您不同意此免责声明，请不要使用本项目。开发者保留随时更改此免责声明的权利，恕不另行通知。
+# MemoizationSearch
+## Introduction
+Memoization Search Template Memoization Search: An Efficient Search Mode In computer science, memoization search is an optimization technique that improves the running speed of algorithms by storing the results of expensive function calls and reusing them in subsequent calls. This method is an important component of dynamic programming and divide-and-conquer strategies, which can significantly improve the performance of these algorithms.
+
+Working Principle of Memoization Search The basic idea of memoization search is to store the solutions of solved sub-problems in a table, and then look up these solutions when needed, instead of recalculating them. This method is particularly effective when dealing with problems with overlapping sub-problems, as it can avoid unnecessary repeated calculations.
+
+For example, consider the calculation of the Fibonacci sequence. The traditional recursive method leads to a large amount of repeated calculation, because the calculation of each number depends on the calculation of the previous two numbers. By using memoization search, we can store the calculation results of each number in a table, and then directly look up these results when calculating new numbers, thus avoiding repeated calculation.
+
+Advantages of Memoization Search The main advantage of memoization search is that it can significantly improve the running speed of algorithms. By avoiding unnecessary repeated calculations, memoization search can reduce the time complexity from exponential level to polynomial level. In addition, memoization search can also improve the space efficiency of algorithms, because it only needs to store the solutions of solved sub-problems, not all possible sub-problems.
+
+Applications of Memoization Search Memoization search has a wide range of applications in many fields, including computer graphics, artificial intelligence, bioinformatics, and network optimization. In these fields, memoization search is used to solve various complex optimization problems, such as path planning, sequence alignment, and image reconstruction.
+
+## Compilation Environment
+Visual Studio 2019 or above IDE The project uses the C++20 standard
+
+## Note
+All functions with underscores are internal functions, it is not recommended to call them directly. Please read the source code before calling to avoid misunderstanding.
+## Disclaimer
+This open source project (hereinafter referred to as “this project”) is provided free of charge by the developer and is published based on the open source code license agreement. This project is for reference and learning purposes only, and users should bear the risk themselves.
+
+This project does not have any express or implied warranties, including but not limited to merchantability, fitness for a particular purpose, and non-infringement. The developer does not guarantee that the functions of this project meet your needs, nor does it guarantee that the operation of this project will not be interrupted or error-free.
+
+In any case, the developer does not assume any direct, indirect, incidental, special or consequential damages caused by the use of this project, including but not limited to the loss of commercial profits, whether these damages are caused by contract, tort or other reasons, even if the developer has been informed of the possibility of such damages.
+
+Using this project means that you have read and agree to abide by this disclaimer. If you do not agree with this disclaimer, please do not use this project. The developer reserves the right to change this disclaimer at any time without further notice.
