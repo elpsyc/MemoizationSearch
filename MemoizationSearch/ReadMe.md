@@ -1,7 +1,20 @@
 # MemoizationSearch
 
 ## 简介
-记忆化搜索模板
+## 记忆化搜索模板
+记忆化搜索：一种高效的搜索模式
+在计算机科学中，记忆化搜索是一种优化技术，它通过存储昂贵的函数调用结果并在后续调用中重用它们，从而提高算法的运行速度。这种方法是动态规划和分治策略的一个重要组成部分，可以显著提高这些算法的性能。
+
+## 记忆化搜索的工作原理
+记忆化搜索的基本思想是将已解决的子问题的解决方案存储在一个表中，然后在需要时查找这些解决方案，而不是重新计算它们。这种方法在处理具有重叠子问题的问题时特别有效，因为它可以避免不必要的重复计算。
+
+例如，考虑斐波那契数列的计算。传统的递归方法会导致大量的重复计算，因为每个数字的计算都依赖于前两个数字的计算。通过使用记忆化搜索，我们可以将每个数字的计算结果存储在一个表中，然后在计算新数字时直接查找这些结果，从而避免了重复计算。
+
+## 记忆化搜索的优点
+记忆化搜索的主要优点是它可以显著提高算法的运行速度。通过避免不必要的重复计算，记忆化搜索可以将指数级的时间复杂度降低到多项式级别。此外，记忆化搜索还可以提高算法的空间效率，因为它只需要存储已解决的子问题的解决方案，而不是所有可能的子问题。
+
+## 记忆化搜索的应用
+记忆化搜索在许多领域都有广泛的应用，包括计算机图形学、人工智能、生物信息学和网络优化。在这些领域，记忆化搜索被用来解决各种复杂的优化问题，如路径规划、序列对齐和图像重建。
 
 
 ### 编译环境
@@ -20,3 +33,28 @@ Visual Studio 2019以上IDE
 在任何情况下，开发者都不承担由使用本项目而导致的任何直接、间接、偶然、特殊或后果性损失，包括但不限于商业利润的损失，无论这些损失是由合同、侵权行为还是其他原因造成的，即使开发者已被告知此类损失的可能性。
 
 使用本项目即表示您已经阅读并同意遵守此免责声明。如果您不同意此免责声明，请不要使用本项目。开发者保留随时更改此免责声明的权利，恕不另行通知。
+# MemoizationSearch
+## Introduction
+Memoization Search Template Memoization Search: An Efficient Search Mode In computer science, memoization search is an optimization technique that improves the running speed of algorithms by storing the results of expensive function calls and reusing them in subsequent calls. This method is an important component of dynamic programming and divide-and-conquer strategies, which can significantly improve the performance of these algorithms.
+
+Working Principle of Memoization Search The basic idea of memoization search is to store the solutions of solved sub-problems in a table, and then look up these solutions when needed, instead of recalculating them. This method is particularly effective when dealing with problems with overlapping sub-problems, as it can avoid unnecessary repeated calculations.
+
+For example, consider the calculation of the Fibonacci sequence. The traditional recursive method leads to a large amount of repeated calculation, because the calculation of each number depends on the calculation of the previous two numbers. By using memoization search, we can store the calculation results of each number in a table, and then directly look up these results when calculating new numbers, thus avoiding repeated calculation.
+
+Advantages of Memoization Search The main advantage of memoization search is that it can significantly improve the running speed of algorithms. By avoiding unnecessary repeated calculations, memoization search can reduce the time complexity from exponential level to polynomial level. In addition, memoization search can also improve the space efficiency of algorithms, because it only needs to store the solutions of solved sub-problems, not all possible sub-problems.
+
+Applications of Memoization Search Memoization search has a wide range of applications in many fields, including computer graphics, artificial intelligence, bioinformatics, and network optimization. In these fields, memoization search is used to solve various complex optimization problems, such as path planning, sequence alignment, and image reconstruction.
+
+## Compilation Environment
+Visual Studio 2019 or above IDE The project uses the C++20 standard
+
+## Note
+All functions with underscores are internal functions, it is not recommended to call them directly. Please read the source code before calling to avoid misunderstanding.
+## Disclaimer
+This open source project (hereinafter referred to as “this project”) is provided free of charge by the developer and is published based on the open source code license agreement. This project is for reference and learning purposes only, and users should bear the risk themselves.
+
+This project does not have any express or implied warranties, including but not limited to merchantability, fitness for a particular purpose, and non-infringement. The developer does not guarantee that the functions of this project meet your needs, nor does it guarantee that the operation of this project will not be interrupted or error-free.
+
+In any case, the developer does not assume any direct, indirect, incidental, special or consequential damages caused by the use of this project, including but not limited to the loss of commercial profits, whether these damages are caused by contract, tort or other reasons, even if the developer has been informed of the possibility of such damages.
+
+Using this project means that you have read and agree to abide by this disclaimer. If you do not agree with this disclaimer, please do not use this project. The developer reserves the right to change this disclaimer at any time without further notice.
