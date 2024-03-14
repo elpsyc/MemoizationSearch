@@ -185,3 +185,31 @@ namespace nonstd {
 		return CachedFunctionFactory::GetCachedFunction(&tempfunc, tempfunc, time);
 	}
 }
+/*
+* 旨在减少重复计算的开销，特别是对于那些计算成本较高的函数。它使用模板和高级C++特性，包括并发容器、智能指针、类型推导和lambda表达式。下面是对代码主要部分的逐一解释：
+
+1. CacheItem 类
+用于存储缓存项的数据结构。
+包含一个值 m_value 和一个过期时间 m_endtime。
+提供一个 IsValid 方法来检查缓存项是否还在有效期内。
+2. SimpleBasicCache 类
+一个简单的基础缓存实现，使用并发容器 concurrent_unordered_map。
+支持异步添加缓存项的功能。
+提供基本的缓存操作，如添加、查找和清除缓存项。
+3. CachedFunction 类
+代表一个可以被缓存的函数。
+内部使用 std::function 来存储任意可调用对象。
+缓存的结果和过期时间存储在两个 std::unordered_map 中，键是函数参数的元组。
+支持对函数的调用，并在缓存中查找之前的结果，如果找到有效的缓存，则返回缓存的结果，否则计算新结果并添加到缓存中。
+4. CachedFunctionFactory 类
+用于管理和创建 CachedFunction 实例的工厂类。
+使用 concurrent_map 来存储所有的 CachedFunction 实例，以支持并发访问。
+静态方法 GetCachedFunction 用于获取或创建一个 CachedFunction 实例。如果对应的实例已存在，则直接返回；如果不存在，则创建一个新实例并返回。
+5. makecached 函数模板
+提供了一种简便的方式来创建和获取 CachedFunction 实例。
+对于直接函数指针和 std::function，直接通过函数指针或 std::function 实例的地址作为唯一标识符来查找或创建缓存的函数实例。
+对于lambda表达式和其他可调用对象，首先将其包装为 std::function，然后使用包装后对象的地址作为唯一标识符。由于这种方法会导致每次调用 makecached 都创建一个新的 std::function 实例，可能需要调整以避免潜在的性能问题。
+总结
+这个缓存系统的设计旨在提供一个灵活且通用的方式来缓存函数调用的结果，特别是对于那些计算成本较高的函数。它通过使用高级C++特性和并发编程技术，使得缓存系统能够在多线程环境中安全运行。然而，使用这个系统时需要注意管理缓存的生命周期和性能开销，特别是在处理lambda表达式和其他无法直接获取地址的可调用对象时
+* 
+*/
