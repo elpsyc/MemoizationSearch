@@ -124,7 +124,7 @@ namespace nonstd {
 		}
 		inline constexpr R operator()(Args&... args) noexcept { return this->operator()(std::forward<Args>(args)...); }
 		inline void clear() { return m_cache.Clear(); }
-		inline void setCacheTime(DWORD time) const { m_Cachevalidtime = time; }
+		inline void setCacheTime(DWORD time) const { if(time>=0)m_Cachevalidtime = time; }
 	};
 	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
 		return CachedFunction<R, Args...>(std::move(func), time);
