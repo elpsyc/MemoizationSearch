@@ -3,7 +3,7 @@
 #include <concurrent_unordered_map.h>
 #include <shared_mutex>
 #include <vector>
-#include<future>
+#include <future>
 #include <functional>
 #include <Windows.h>
 #include <typeindex>
