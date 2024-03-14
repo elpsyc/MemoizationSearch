@@ -37,7 +37,7 @@ namespace nonstd {
 			m_Cache.clear();
 		}
 		inline iterator AddAysncCache(const _Tx& _key, const _Ty& _value, DWORD _validtime = 200) {
-			return std::async(std::launch::async, [&]()->iterator {
+			auto fut= std::async(std::launch::async, [&]()->iterator {
 				auto nowTime = std::chrono::system_clock::now();
 				auto newValue = CacheItem<_Ty>(_value, nowTime + std::chrono::milliseconds(_validtime + rand() % 30));
 				std::unique_lock<mutextype> lock(m_mutex, std::defer_lock);
@@ -46,8 +46,7 @@ namespace nonstd {
 				if (lb != m_Cache.end()) {
 					lb->second = newValue;
 					ret = lb;
-				}
-				else {
+				}else {
 					if (lock.try_lock()) {
 						ret = m_Cache.insert(lb, pair_type(_key, newValue));
 						lock.unlock();
@@ -65,7 +64,8 @@ namespace nonstd {
 					}
 				}
 				return ret;
-				}).get();
+			});
+			return fut;
 		}
 		inline iterator erase(const _Tx& value) {
 			std::shared_lock lock(m_mutex);
@@ -124,32 +124,28 @@ namespace nonstd {
 			if (auto it = expiry_.find(argsTuple); it != expiry_.end() && it->second > now) {
 				return cache_[argsTuple];
 			}
-
 			R result = std::apply(func_, argsTuple);
 			cache_[argsTuple] = result;
 			expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
 			return result;
 		}
-
 	public:
 		CachedFunction(std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) : func_(std::move(func)), cacheTime_(cacheTime) {}
-
 		R operator()(Args... args) const {
 			auto argsTuple = std::make_tuple(args...);
 			return callFunctionAndCache(argsTuple);
 		}
-
-		// Handling calls with no parameters
-		template<typename = std::enable_if_t<sizeof...(Args) == 0, R>>
 		R operator()() const {
-			std::tuple<> argsTuple;
-			return callFunctionAndCache(argsTuple);
+			if constexpr (sizeof...(Args) == 0) {
+				std::tuple<> argsTuple;
+				return callFunctionAndCache(argsTuple);
+			}else {
+				static_assert(sizeof...(Args) == 0, "This function can only be called with no arguments.");
+			}
 		}
-
 		void setCacheTime(DWORD cacheTime) {
 			cacheTime_ = cacheTime;
 		}
-
 		void clearCache() {
 			cache_.clear();
 			expiry_.clear();
@@ -157,55 +153,35 @@ namespace nonstd {
 	};
 	class CachedFunctionFactory {
 	private:
-		static std::unordered_map<std::type_index, std::shared_ptr<void>> cache_;
-
-		// 禁止外部构造和复制
-		CachedFunctionFactory() {}
-		CachedFunctionFactory(const CachedFunctionFactory&) = delete;
-		CachedFunctionFactory& operator=(const CachedFunctionFactory&) = delete;
-
+		static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> cache_;
 	public:
 		template <typename R, typename... Args>
-		static CachedFunction<R, Args...>& GetCachedFunction(std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) {
+		static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) {
 			std::type_index key = std::type_index(typeid(CachedFunction<R, Args...>));
-
-			if (cache_.find(key) == cache_.end()) {
+			void* ptrKey = funcPtr; // 使用函数指针地址或唯一标识作为键
+			auto& funcMap = cache_[key];
+			if (funcMap.find(ptrKey) == funcMap.end()) {
 				auto cachedFunc = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
-				cache_[key] = cachedFunc;
+				funcMap[ptrKey] = cachedFunc;
 			}
-
-			// 使用 static_pointer_cast 安全转换类型
-			return *std::static_pointer_cast<CachedFunction<R, Args...>>(cache_[key]);
+			return *std::static_pointer_cast<CachedFunction<R, Args...>>(funcMap[ptrKey]);
 		}
-
 		static void ClearCache() {
 			cache_.clear();
 		}
 	};
-
-	// 静态成员初始化
-	std::unordered_map<std::type_index, std::shared_ptr<void>> CachedFunctionFactory::cache_;
-
-	// Helper function to create a CachedFunction
+	std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> CachedFunctionFactory::cache_;
 	template <typename R, typename... Args>
-	CachedFunction<R, Args...> make_cached_function(R(*func)(Args...), DWORD cacheTime = CacheNormalTTL) {
-		return CachedFunction<R, Args...>(func, cacheTime);
+	inline CachedFunction<R, Args...>& makecached(R(*func)(Args...), DWORD time = nonstd::CacheNormalTTL) noexcept {
+		return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time);
 	}
-	template <typename R, typename... Args>
-	inline CachedFunction<R, Args...>& makecached(R(*func)(Args...), DWORD time = CacheNormalTTL) noexcept {
-		static CachedFunction<R, Args...> instance(std::function<R(Args...)>(func), time);
-		return instance;
-	}
-
 	template <typename R, typename... Args>
 	inline CachedFunction<R, Args...>& makecached(const std::function<R(Args...)>& func, DWORD time = CacheNormalTTL) noexcept {
-		static CachedFunction<R, Args...> instance(func, time);
-		return instance;
+		return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time);
 	}
-
 	template <typename F>
-	inline auto& makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
-		static CachedFunction<decltype(func), F> instance(std::function(std::forward<F>(func)), time);
-		return instance;
+	inline constexpr decltype(auto) makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
+		auto tempfunc=std::function(std::move(func));
+		return CachedFunctionFactory::GetCachedFunction(&tempfunc, tempfunc, time);
 	}
 }
