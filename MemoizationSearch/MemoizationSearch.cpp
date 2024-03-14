@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <iostream>
 namespace nonstd {
-	constexpr DWORD CacheNormalTTL = 200;
+	constexpr DWORD CacheNormalTTL = 200; //默认过期时间
 	template<class Key, class Val>
 	using concurrent_map = Concurrency::concurrent_unordered_map<Key, Val>;
 	template<typename _Tx>
