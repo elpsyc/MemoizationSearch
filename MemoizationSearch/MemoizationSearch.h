@@ -1,0 +1,142 @@
+#pragma once
+#include <algorithm>
+#include <concurrent_unordered_map.h>
+#include <shared_mutex>
+#include <vector>
+#include<future>
+#include <functional>
+#include <Windows.h>
+namespace nonstd {
+	constexpr DWORD CacheNormalTTL = 200; //默认过期时间
+	template<class Key, class Val>
+	using concurrent_map = Concurrency::concurrent_unordered_map<Key, Val>;
+	template<typename _Tx>
+	class CacheItem {
+	public:
+		using timepoint = std::chrono::time_point<std::chrono::system_clock>;
+		timepoint m_endtime;
+		_Tx   m_value;
+		//默认构造函数
+		CacheItem() = default;
+		//拷贝构造函数
+		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
+		//移动构造函数
+		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
+		//析构函数
+		~CacheItem() { m_value.~_Tx(); }
+		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }
+	};
+	template<typename _Tx, typename _Ty>
+	class SimpleBasicCache {
+	public:
+		concurrent_map<_Tx, CacheItem<_Ty>> m_Cache;
+		using pair_type = typename std::decay_t<decltype(m_Cache)>::value_type;
+		using iterator = typename std::decay_t<decltype(m_Cache)>::iterator;
+		mutable std::shared_mutex m_mutex;
+		using mutextype = decltype(m_mutex);
+		SimpleBasicCache() { srand((unsigned int)time(0)); }
+		~SimpleBasicCache()noexcept {
+			std::unique_lock<mutextype> lock(m_mutex);
+			m_Cache.clear();
+		}
+		inline iterator AddAysncCache(const _Tx& _key, const _Ty& _value, DWORD _validtime = 200) {
+			return std::async(std::launch::async, [&]()->iterator {
+				auto nowTime = std::chrono::system_clock::now();
+				auto newValue = CacheItem<_Ty>(_value, nowTime + std::chrono::milliseconds(_validtime + rand() % 30));
+				std::unique_lock<mutextype> lock(m_mutex, std::defer_lock);
+				auto lb = m_Cache.find(_key);
+				iterator ret = m_Cache.end();
+				if (lb != m_Cache.end()) {
+					lb->second = newValue;
+					ret = lb;
+				}
+				else {
+					if (lock.try_lock()) {
+						ret = m_Cache.insert(lb, pair_type(_key, newValue));
+						lock.unlock();
+					}
+				}
+				static auto firsttime = std::chrono::system_clock::now();
+				auto now = std::chrono::system_clock::now();
+				if (std::chrono::duration_cast<std::chrono::milliseconds>(now - firsttime).count() > 5000) {
+					firsttime = now;
+					if (lock.try_lock()) {
+						for (auto it = m_Cache.begin(); it != m_Cache.end();) {
+							it = (!it->second.IsValid(now)) ? m_Cache.unsafe_erase(it) : ++it;
+						}
+						lock.unlock();
+					}
+				}
+				return ret;
+				}).get();
+		}
+		inline iterator erase(const _Tx& value) {
+			std::shared_lock lock(m_mutex);
+			auto iter = m_Cache.find(value);
+			iterator ret = m_Cache.end();
+			std::unique_lock<mutextype> ulock(m_mutex, std::defer_lock);
+			if (ulock.try_lock()) {
+				if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter);
+				lock.unlock();
+				return ret;
+			}
+			return (iterator)m_Cache.end();
+		}
+		inline std::pair<iterator, bool> find(const _Tx& _key) {
+			if (m_Cache.empty()) return { iterator(),false };
+			auto iter = m_Cache.find(_key);
+			return { iter, iter != m_Cache.end() && iter->second.IsValid(std::chrono::system_clock::now()) };
+		}
+		inline std::pair<iterator, bool>& operator[](const _Tx& _key) {
+			return find(_key);
+		}
+		inline void Clear() {
+			std::unique_lock<mutextype> lock(m_mutex);
+			m_Cache.clear();
+		}
+	};
+	template<class _Kty, class _Vty> using SimpleCache = SimpleBasicCache<_Kty, _Vty>;
+	template<typename T> struct std::hash<std::vector<T>> {
+		std::size_t operator()(const std::vector<T>& v) const {
+			std::hash<T> hasher;
+			std::size_t seed = 0;
+			for (auto& elem : v)seed ^= hasher(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			return seed;
+		}
+	};
+	template<typename... Args> struct std::hash<std::tuple<Args...>> {
+		std::size_t operator()(const std::tuple<Args...>& t) const { return std::hash<std::vector<std::size_t>>()(get_indices(t)); }
+		template<std::size_t... Is> std::vector<std::size_t> indices(std::tuple<Args...> const& t, std::index_sequence<Is...>) const { return { std::hash<Args>()(std::get<Is>(t))... }; }
+		template<std::size_t N> std::vector<std::size_t> indices(std::tuple<Args...> const& t) const { return indices(t, std::make_index_sequence<N>{}); }
+		std::vector<std::size_t> get_indices(std::tuple<Args...> const& t) const { return indices<sizeof...(Args)>(t); }
+	};
+	template<typename R, typename... Args>
+	class CachedFunction final {
+	private:
+		std::function<R(Args...)> m_func;
+		SimpleCache<std::tuple<std::decay_t<Args>...>, R> m_cache;
+		DWORD m_Cachevalidtime;
+	public:
+		CachedFunction() = default;
+		~CachedFunction() { m_cache.Clear(); }
+		CachedFunction(CachedFunction&& other) noexcept : m_func(std::move(other.m_func)), m_cache(std::move(other.m_cache)), m_Cachevalidtime(other.m_Cachevalidtime) {}
+		explicit CachedFunction(const std::function<R(Args...)>& func, DWORD validTime = CacheNormalTTL) : m_func(func), m_Cachevalidtime(validTime) {}
+		inline constexpr R operator()(Args&&... args) noexcept {
+			auto key = std::make_tuple(std::forward<Args>(args)...);
+			auto [it, ishit] = m_cache.find(key);
+			return ((ishit) ? it : m_cache.AddAysncCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
+		}
+		inline constexpr R operator()(Args&... args) noexcept { return this->operator()(std::forward<Args>(args)...); }
+		inline void clear() { return m_cache.Clear(); }
+		inline void setCacheTime(DWORD time) const { m_Cachevalidtime = time; }
+	};
+	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
+		return CachedFunction<R, Args...>(std::move(func), time);
+	}
+	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(std::function<R(Args...)> func, DWORD time = CacheNormalTTL)noexcept {
+		return CachedFunction<R, Args...>(std::move(func), time);
+	}
+	template <typename F> inline constexpr decltype(auto) makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
+		return makecached(std::function(std::move(func)), time);
+	}
+}
