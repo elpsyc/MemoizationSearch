@@ -31,19 +31,19 @@ int main(){
 	return 0;
 }
 ```
-基础组件
+#### 基础组件
 `CacheItem` 类：用于存储缓存项，包含一个值和一个过期时间。`IsValid` 方法用于检查缓存项是否仍然有效。
 
 `SimpleBasicCache` 类：一个基本的线程安全缓存实现，使用 `concurrent_unordered_map` 来存储缓存项。它提供了异步添加缓存项 (`AddAysncCache`)、删除缓存项 (`erase`) 和查找缓存项 (`find`) 的方法。
 
 `CachedFunction` 类：用于缓存函数调用结果的主要类。它接收一个 `std::function` 和一个可选的缓存有效时间。`operator()` 被重载以接收任意数量的参数，并根据这些参数来查找或生成缓存项。如果缓存命中，则返回缓存的结果；否则，计算新结果、缓存并返回它。
 
-工厂组件
+#### 工厂组件
 `CachedFunctionFactory` 类：一个工厂类，用于创建和管理 `CachedFunction` 实例。它使用一个静态的 `concurrent_map` 来存储所有的缓存函数实例。`GetCachedFunction` 方法检查是否已有相应的缓存函数实例，如果没有则创建一个新的实例并返回。
 
 `makecached` 函数模板：一个辅助函数，用于简化 `CachedFunction` 实例的创建。它接收一个函数（或者可调用对象）和一个缓存有效时间，然后返回一个对应的 `CachedFunction` 引用。这个函数主要是调用 `CachedFunctionFactory` 来实现的。
 
-关键概念和实现细节
+#### 关键概念和实现细节
 模板和类型推导：`CachedFunction` 和 `makecached` 都使用了模板编程和类型推导来处理不同的函数签名和调用参数。
 
 线程安全：`SimpleBasicCache` 类使用了 `std::shared_mutex` 来实现线程安全，确保并发访问缓存时的数据一致性。
