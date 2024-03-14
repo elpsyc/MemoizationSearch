@@ -6,6 +6,7 @@
 #include<future>
 #include <functional>
 #include <Windows.h>
+#include <typeindex>
 namespace nonstd {
 	constexpr DWORD CacheNormalTTL = 200;
 	template<class Key, class Val>
@@ -113,7 +114,10 @@ namespace nonstd {
 		mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
 		mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
 		DWORD cacheTime_ = CacheNormalTTL;
-
+		CachedFunction(const CachedFunction&) = delete;
+		CachedFunction& operator=(const CachedFunction&) = delete;
+		CachedFunction(CachedFunction&&) = delete;
+		CachedFunction& operator=(CachedFunction&&) = delete;
 		template<typename... T>
 		R callFunctionAndCache(std::tuple<T...> argsTuple) const {
 			auto now = std::chrono::steady_clock::now();
@@ -151,19 +155,57 @@ namespace nonstd {
 			expiry_.clear();
 		}
 	};
+	class CachedFunctionFactory {
+	private:
+		static std::unordered_map<std::type_index, std::shared_ptr<void>> cache_;
+
+		// 禁止外部构造和复制
+		CachedFunctionFactory() {}
+		CachedFunctionFactory(const CachedFunctionFactory&) = delete;
+		CachedFunctionFactory& operator=(const CachedFunctionFactory&) = delete;
+
+	public:
+		template <typename R, typename... Args>
+		static CachedFunction<R, Args...>& GetCachedFunction(std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) {
+			std::type_index key = std::type_index(typeid(CachedFunction<R, Args...>));
+
+			if (cache_.find(key) == cache_.end()) {
+				auto cachedFunc = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
+				cache_[key] = cachedFunc;
+			}
+
+			// 使用 static_pointer_cast 安全转换类型
+			return *std::static_pointer_cast<CachedFunction<R, Args...>>(cache_[key]);
+		}
+
+		static void ClearCache() {
+			cache_.clear();
+		}
+	};
+
+	// 静态成员初始化
+	std::unordered_map<std::type_index, std::shared_ptr<void>> CachedFunctionFactory::cache_;
 
 	// Helper function to create a CachedFunction
 	template <typename R, typename... Args>
 	CachedFunction<R, Args...> make_cached_function(R(*func)(Args...), DWORD cacheTime = CacheNormalTTL) {
 		return CachedFunction<R, Args...>(func, cacheTime);
 	}
-	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
-		return CachedFunction<R, Args...>(std::move(func), time);
+	template <typename R, typename... Args>
+	inline CachedFunction<R, Args...>& makecached(R(*func)(Args...), DWORD time = CacheNormalTTL) noexcept {
+		static CachedFunction<R, Args...> instance(std::function<R(Args...)>(func), time);
+		return instance;
 	}
-	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(std::function<R(Args...)> func, DWORD time = CacheNormalTTL)noexcept {
-		return CachedFunction<R, Args...>(std::move(func), time);
+
+	template <typename R, typename... Args>
+	inline CachedFunction<R, Args...>& makecached(const std::function<R(Args...)>& func, DWORD time = CacheNormalTTL) noexcept {
+		static CachedFunction<R, Args...> instance(func, time);
+		return instance;
 	}
-	template <typename F> inline constexpr decltype(auto) makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
-		return makecached(std::function(std::move(func)), time);
+
+	template <typename F>
+	inline auto& makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
+		static CachedFunction<decltype(func), F> instance(std::function(std::forward<F>(func)), time);
+		return instance;
 	}
 }
