@@ -107,25 +107,56 @@ namespace nonstd {
 		std::vector<std::size_t> get_indices(std::tuple<Args...> const& t) const { return indices<sizeof...(Args)>(t); }
 	};
 	template<typename R, typename... Args>
-	class CachedFunction final {
+	class CachedFunction {
 	private:
-		std::function<R(Args...)> m_func;
-		SimpleCache<std::tuple<std::decay_t<Args>...>, R> m_cache;
-		DWORD m_Cachevalidtime;
-	public:
-		CachedFunction() = default;
-		~CachedFunction() { m_cache.Clear(); }
-		CachedFunction(CachedFunction&& other) noexcept : m_func(std::move(other.m_func)), m_cache(std::move(other.m_cache)), m_Cachevalidtime(other.m_Cachevalidtime) {}
-		explicit CachedFunction(const std::function<R(Args...)>& func, DWORD validTime = CacheNormalTTL) : m_func(func), m_Cachevalidtime(validTime) {}
-		inline constexpr R operator()(Args&&... args) noexcept {
-			auto key = std::make_tuple(std::forward<Args>(args)...);
-			auto [it, hit] = m_cache.find(key);
-			return ((hit) ? it : m_cache.AddAysncCache(std::move(key), m_func(std::forward<Args>(args)...), m_Cachevalidtime))->second.m_value;
+		std::function<R(Args...)> func_;
+		mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
+		mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
+		DWORD cacheTime_ = CacheNormalTTL;
+
+		template<typename... T>
+		R callFunctionAndCache(std::tuple<T...> argsTuple) const {
+			auto now = std::chrono::steady_clock::now();
+			if (auto it = expiry_.find(argsTuple); it != expiry_.end() && it->second > now) {
+				return cache_[argsTuple];
+			}
+
+			R result = std::apply(func_, argsTuple);
+			cache_[argsTuple] = result;
+			expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
+			return result;
 		}
-		inline constexpr R operator()(Args&... args) noexcept { return this->operator()(std::forward<Args>(args)...); }
-		inline void clear() { return m_cache.Clear(); }
-		inline void setCacheTime(DWORD time) const { if(time>=0)m_Cachevalidtime = time; }
+
+	public:
+		CachedFunction(std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) : func_(std::move(func)), cacheTime_(cacheTime) {}
+
+		R operator()(Args... args) const {
+			auto argsTuple = std::make_tuple(args...);
+			return callFunctionAndCache(argsTuple);
+		}
+
+		// Handling calls with no parameters
+		template<typename = std::enable_if_t<sizeof...(Args) == 0, R>>
+		R operator()() const {
+			std::tuple<> argsTuple;
+			return callFunctionAndCache(argsTuple);
+		}
+
+		void setCacheTime(DWORD cacheTime) {
+			cacheTime_ = cacheTime;
+		}
+
+		void clearCache() {
+			cache_.clear();
+			expiry_.clear();
+		}
 	};
+
+	// Helper function to create a CachedFunction
+	template <typename R, typename... Args>
+	CachedFunction<R, Args...> make_cached_function(R(*func)(Args...), DWORD cacheTime = CacheNormalTTL) {
+		return CachedFunction<R, Args...>(func, cacheTime);
+	}
 	template <typename R, typename... Args> inline constexpr decltype(auto) makecached(R(*func)(Args...), DWORD time = CacheNormalTTL)noexcept {
 		return CachedFunction<R, Args...>(std::move(func), time);
 	}
