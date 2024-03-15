@@ -55,9 +55,7 @@ namespace nonstd {
 				if (std::chrono::duration_cast<std::chrono::milliseconds>(now - firsttime).count() > 5000) {
 					firsttime = now;
 					if (lock.try_lock()) {
-						for (auto it = m_Cache.begin(); it != m_Cache.end();) {
-							it = (!it->second.IsValid(now)) ? m_Cache.unsafe_erase(it) : ++it;
-						}
+						for (auto it = m_Cache.begin(); it != m_Cache.end();)it = (!it->second.IsValid(now)) ? m_Cache.unsafe_erase(it) : ++it;
 						lock.unlock();
 					}
 				}
@@ -82,7 +80,7 @@ namespace nonstd {
 			auto iter = m_Cache.find(_key);
 			return { iter, iter != m_Cache.end() && iter->second.IsValid(std::chrono::system_clock::now()) };
 		}
-		inline std::pair<iterator, bool>& operator[](const _Tx& _key) {
+		inline std::pair<iterator, bool> operator[](const _Tx& _key) {
 			return find(_key);
 		}
 		inline void Clear() {
@@ -125,7 +123,7 @@ namespace nonstd {
 			return result;
 		}
 	public:
-		CachedFunction(const std::function<R(Args...)>& func, DWORD cacheTime = CacheNormalTTL) : func_(std::move(func)), cacheTime_(cacheTime) {}
+		explicit CachedFunction(const std::function<R(Args...)>& func, DWORD cacheTime = CacheNormalTTL) : func_(std::move(func)), cacheTime_(cacheTime) {}
 		R operator()(Args... args) const {return callFunctionAndCache(std::make_tuple(args...));}
 		void setCacheTime(DWORD cacheTime) {cacheTime_ = cacheTime;}
 		void clearCache() {
