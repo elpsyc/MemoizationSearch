@@ -16,9 +16,7 @@ namespace nonstd {
 		using timepoint = std::chrono::time_point<std::chrono::system_clock>;
 		timepoint m_endtime;
 		_Tx   m_value;
-		CacheItem() = default;
-		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
-		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
+		explicit CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
 		~CacheItem() { m_value.~_Tx(); }
 		inline bool IsValid(const timepoint& now)noexcept { return now < m_endtime; }//因为重载bool是不能有参数的 能用已有的时间再次求是性能浪费
 	};
@@ -30,10 +28,7 @@ namespace nonstd {
 		mutable std::shared_mutex m_mutex;
 		using mutextype = decltype(m_mutex);
 		SimpleBasicCache() { srand((unsigned int)time(0)); }
-		~SimpleBasicCache()noexcept {
-			std::unique_lock<mutextype> lock(m_mutex);
-			m_Cache.clear();
-		}
+		~SimpleBasicCache()noexcept {std::unique_lock<mutextype> lock(m_mutex), m_Cache.clear();}
 		inline iterator AddAysncCache(const _Tx& _key, const _Ty& _value, DWORD _validtime = 200) {
 			auto fut= std::async(std::launch::async, [&]()->iterator {
 				auto nowTime = std::chrono::system_clock::now();
@@ -42,13 +37,9 @@ namespace nonstd {
 				auto lb = m_Cache.find(_key);
 				auto ret = m_Cache.end();
 				if (lb != m_Cache.end()) {
-					lb->second = newValue;
-					ret = lb;
+					lb->second = newValue, ret = lb;
 				}else {
-					if (lock.try_lock()) {
-						ret = m_Cache.insert(lb, pair_type(_key, newValue));
-						lock.unlock();
-					}
+					if (lock.try_lock())ret = m_Cache.insert(lb, pair_type(_key, newValue)), lock.unlock();
 				}
 				static auto firsttime = std::chrono::system_clock::now();
 				auto now = std::chrono::system_clock::now();
@@ -69,8 +60,7 @@ namespace nonstd {
 			auto ret = m_Cache.end();
 			std::unique_lock<mutextype> ulock(m_mutex, std::defer_lock);
 			if (ulock.try_lock()) {
-				if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter);
-				lock.unlock();
+				if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter), lock.unlock();
 				return ret;
 			}
 			return (iterator)m_Cache.end();
@@ -80,13 +70,8 @@ namespace nonstd {
 			auto iter = m_Cache.find(_key);
 			return { iter, iter != m_Cache.end() && iter->second.IsValid(std::chrono::system_clock::now()) };
 		}
-		inline std::pair<iterator, bool> operator[](const _Tx& _key) {
-			return find(_key);
-		}
-		inline void Clear() {
-			std::unique_lock<mutextype> lock(m_mutex);
-			m_Cache.clear();
-		}
+		inline std::pair<iterator, bool> operator[](const _Tx& _key) {return find(_key);}
+		inline void Clear() { std::unique_lock<mutextype> lock(m_mutex), m_Cache.clear(); }
 	};
 	template<class _Kty, class _Vty> using SimpleCache = SimpleBasicCache<_Kty, _Vty>;
 	template<typename T> struct std::hash<std::vector<T>> {
@@ -149,13 +134,9 @@ namespace nonstd {
 	};
 	concurrent_map<std::type_index, concurrent_map<void*, std::shared_ptr<void>>> CachedFunctionFactory::cache_;
 	template <typename R, typename... Args>
-	inline CachedFunction<R, Args...>& makecached(R(*func)(Args...), DWORD time = nonstd::CacheNormalTTL) noexcept {
-		return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time);
-	}
+	inline CachedFunction<R, Args...>& makecached(R(*func)(Args...), DWORD time = nonstd::CacheNormalTTL) noexcept { return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time); }
 	template <typename R, typename... Args>
-	inline CachedFunction<R, Args...>& makecached(const std::function<R(Args...)>& func, DWORD time = CacheNormalTTL) noexcept {
-		return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time);
-	}
+	inline CachedFunction<R, Args...>& makecached(const std::function<R(Args...)>& func, DWORD time = CacheNormalTTL) noexcept {return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(func), std::function<R(Args...)>(func), time);}
 	template <typename F>
 	inline constexpr decltype(auto) makecached(F&& func, DWORD time = CacheNormalTTL) noexcept {
 		auto tempfunc=std::function(std::move(func));

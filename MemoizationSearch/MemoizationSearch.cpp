@@ -35,5 +35,8 @@ int main(){
 	std::cout << cachedadd_(5,3) << std::endl;//add函数的缓存版本只被创建了一次
 	std::cout << cachedminus(5,3) << std::endl;
 	std::cout << cachedminus(5,3) << std::endl;
+	std::cout << cachedminus(5,3) << std::endl;
+	std::cout << cachedminus(5,3) << std::endl;
+	std::cout << cachedminus(5,3) << std::endl;
 	return 0;
 }
