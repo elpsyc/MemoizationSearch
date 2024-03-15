@@ -20,7 +20,7 @@ namespace nonstd {
 		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
 		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
 		~CacheItem() { m_value.~_Tx(); }
-		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }//因为重载bool是不能有参数的 能用已有的时间再次求是性能浪费
+		inline bool IsValid(const timepoint& now)noexcept { return now < m_endtime; }//因为重载bool是不能有参数的 能用已有的时间再次求是性能浪费
 	};
 	template<typename _Tx, typename _Ty>
 	struct SimpleBasicCache {
