@@ -12,8 +12,7 @@ namespace nonstd {
 	template<class Key, class Val>
 	using concurrent_map = Concurrency::concurrent_unordered_map<Key, Val>;
 	template<typename _Tx>
-	class CacheItem {
-	public:
+	struct CacheItem {
 		using timepoint = std::chrono::time_point<std::chrono::system_clock>;
 		timepoint m_endtime;
 		_Tx   m_value;
@@ -21,11 +20,10 @@ namespace nonstd {
 		CacheItem(const _Tx& _value, const timepoint& _endtime) :m_value(_value), m_endtime(_endtime) {}
 		CacheItem(const _Tx&& _value, const timepoint& _endtime) :m_value(std::move(_value)), m_endtime(_endtime) {}
 		~CacheItem() { m_value.~_Tx(); }
-		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }//因为重载bool是不能有参数的
+		inline bool IsValid(timepoint now)noexcept { return now < m_endtime; }//因为重载bool是不能有参数的 能用已有的时间再次求是性能浪费
 	};
 	template<typename _Tx, typename _Ty>
-	class SimpleBasicCache {
-	public:
+	struct SimpleBasicCache {
 		concurrent_map<_Tx, CacheItem<_Ty>> m_Cache;
 		using pair_type = typename std::decay_t<decltype(m_Cache)>::value_type;
 		using iterator = typename std::decay_t<decltype(m_Cache)>::iterator;
@@ -42,7 +40,7 @@ namespace nonstd {
 				auto newValue = CacheItem<_Ty>(_value, nowTime + std::chrono::milliseconds(_validtime + rand() % 30));
 				std::unique_lock<mutextype> lock(m_mutex, std::defer_lock);
 				auto lb = m_Cache.find(_key);
-				iterator ret = m_Cache.end();
+				auto ret = m_Cache.end();
 				if (lb != m_Cache.end()) {
 					lb->second = newValue;
 					ret = lb;
@@ -70,7 +68,7 @@ namespace nonstd {
 		inline iterator erase(const _Tx& value) {
 			std::shared_lock lock(m_mutex);
 			auto iter = m_Cache.find(value);
-			iterator ret = m_Cache.end();
+			auto ret = m_Cache.end();
 			std::unique_lock<mutextype> ulock(m_mutex, std::defer_lock);
 			if (ulock.try_lock()) {
 				if (iter != m_Cache.end()) ret = m_Cache.unsafe_erase(iter);
@@ -97,7 +95,7 @@ namespace nonstd {
 		std::size_t operator()(const std::vector<T>& v) const {
 			std::hash<T> hasher;
 			std::size_t seed = 0;
-			for (auto& elem : v)seed ^= hasher(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			for (auto& elem : v)seed ^= hasher(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);//0x9e3779b9 是黄金分割数的16进制形式
 			return seed;
 		}
 	};
@@ -109,7 +107,6 @@ namespace nonstd {
 	};
 	template<typename R, typename... Args>
 	class CachedFunction {
-	private:
 		std::function<R(Args...)> func_;
 		mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
 		mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
@@ -121,36 +118,28 @@ namespace nonstd {
 		template<typename... T>
 		R callFunctionAndCache(const std::tuple<T...>& argsTuple) const {
 			auto now = std::chrono::steady_clock::now();
-			if (auto it = expiry_.find(argsTuple); it != expiry_.end() && it->second > now) {
-				return cache_[argsTuple];
-			}
-			R result = std::apply(func_, argsTuple);
+			if (auto it = expiry_.find(argsTuple); it != expiry_.end() && it->second > now)return cache_[argsTuple];
+			auto result = std::apply(func_, argsTuple);
 			cache_[argsTuple] = result;
 			expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
 			return result;
 		}
 	public:
-		CachedFunction(std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) : func_(std::move(func)), cacheTime_(cacheTime) {}
-		R operator()(Args... args) const {
-			auto argsTuple = std::make_tuple(args...);
-			return callFunctionAndCache(argsTuple);
-		}
-		void setCacheTime(DWORD cacheTime) {
-			cacheTime_ = cacheTime;
-		}
+		CachedFunction(const std::function<R(Args...)>& func, DWORD cacheTime = CacheNormalTTL) : func_(std::move(func)), cacheTime_(cacheTime) {}
+		R operator()(Args... args) const {return callFunctionAndCache(std::make_tuple(args...));}
+		void setCacheTime(DWORD cacheTime) {cacheTime_ = cacheTime;}
 		void clearCache() {
 			cache_.clear();
 			expiry_.clear();
 		}
 	};
 	class CachedFunctionFactory {
-	private:
 		static concurrent_map<std::type_index, concurrent_map<void*, std::shared_ptr<void>>> cache_;
 	public:
 		template <typename R, typename... Args>
-		static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, std::function<R(Args...)> func, DWORD cacheTime = CacheNormalTTL) {
+		static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr,const std::function<R(Args...)>& func, DWORD cacheTime = CacheNormalTTL) {
 			std::type_index key = std::type_index(typeid(CachedFunction<R, Args...>));
-			void* ptrKey = funcPtr; // 使用函数指针地址或唯一标识作为键
+			auto ptrKey = funcPtr; // 使用函数指针地址或唯一标识作为键
 			auto& funcMap = cache_[key];
 			if (funcMap.find(ptrKey) == funcMap.end()) {
 				auto cachedFunc = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
@@ -158,9 +147,7 @@ namespace nonstd {
 			}
 			return *std::static_pointer_cast<CachedFunction<R, Args...>>(funcMap[ptrKey]);
 		}
-		static void ClearCache() {
-			cache_.clear();
-		}
+		static void ClearCache() {cache_.clear();}
 	};
 	concurrent_map<std::type_index, concurrent_map<void*, std::shared_ptr<void>>> CachedFunctionFactory::cache_;
 	template <typename R, typename... Args>
