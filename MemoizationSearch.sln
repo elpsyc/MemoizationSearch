@@ -7,14 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MemoizationSearch", "Memoiz
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{083661D8-DC4D-4D57-8B89-477628EDF067}.Debug|x64.ActiveCfg = Release|x64
-		{083661D8-DC4D-4D57-8B89-477628EDF067}.Debug|x86.ActiveCfg = Release|Win32
 		{083661D8-DC4D-4D57-8B89-477628EDF067}.Release|x64.ActiveCfg = Release|x64
 		{083661D8-DC4D-4D57-8B89-477628EDF067}.Release|x64.Build.0 = Release|x64
 		{083661D8-DC4D-4D57-8B89-477628EDF067}.Release|x86.ActiveCfg = Release|Win32
