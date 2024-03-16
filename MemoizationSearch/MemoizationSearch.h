@@ -117,7 +117,7 @@ namespace nonstd {
     std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::cache_;
 
     template<typename F, size_t... Is>
-    inline auto makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) noexcept {
+    inline auto& makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) noexcept {
         using traits = function_traits<std::decay_t<F>>;
 
         // 修正：确保我们可以正确地包装f为std::function
@@ -131,7 +131,7 @@ namespace nonstd {
     }
 
     template<typename F>
-    inline auto makecached(F f, _DWORD time = CacheNormalTTL) noexcept {
+    inline auto& makecached(F f, _DWORD time = CacheNormalTTL) noexcept {
         using traits = function_traits<std::decay_t<F>>;
         return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
     }
