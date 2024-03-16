@@ -6,7 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <typeindex>
-typedef unsigned long       _DWORD;
+typedef unsigned long  _DWORD;
 #define INLINE inline
 #define NOEXCEPT noexcept
 namespace std {
@@ -53,7 +53,7 @@ namespace nonstd {
             std::unique_lock<std::mutex> lock(mtx);
             it = expiry_.find(argsTuple);
             if (it != expiry_.end() && it->second > now) return cache_.at(argsTuple);
-            R result = std::apply(func_, argsTuple);
+            auto result = std::apply(func_, argsTuple);
             cache_[argsTuple] = result;
             expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
             return result;
