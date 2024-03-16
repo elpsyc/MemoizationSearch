@@ -42,7 +42,7 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
     public:
-        explicit CachedFunction(std::function<R(Args...)> func, _DWORD cacheTime = CacheNormalTTL)
+        explicit CachedFunction(const std::function<R(Args...)>& func, _DWORD cacheTime = CacheNormalTTL)
             : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         INLINE R operator()(Args&&... args) const NOEXCEPT {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
@@ -69,8 +69,7 @@ namespace nonstd {
         mutable R cachedResult_;
         mutable std::chrono::steady_clock::time_point expiry_;
     public:
-        explicit CachedFunction(std::function<R()> func, _DWORD cacheTime = CacheNormalTTL)
-            : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
+        explicit CachedFunction(const std::function<R()>& func, _DWORD cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         INLINE R operator()() const NOEXCEPT {
             auto now = std::chrono::steady_clock::now();
             if (expiry_ > now) return cachedResult_;
