@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <memory>
 #include <mutex>
-#include<typeindex>
+#include <typeindex>
 typedef unsigned long       _DWORD;
 #define INLINE inline
 #define NOEXCEPT noexcept
@@ -102,7 +102,7 @@ namespace nonstd {
     public:
         template <typename R, typename... Args>
         static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, _DWORD cacheTime = CacheNormalTTL) {
-            std::type_index key = std::type_index(typeid(CachedFunction<R, Args...>));
+            auto key = std::type_index(typeid(CachedFunction<R, Args...>));
             auto ptrKey = funcPtr; // 使用函数指针地址或唯一标识作为键
             auto& funcMap = cache_[key];
             if (funcMap.find(ptrKey) == funcMap.end()) {
@@ -118,7 +118,7 @@ namespace nonstd {
     inline auto& makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) noexcept {
         using traits = function_traits<std::decay_t<F>>;
         std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
-        void* funcPtr = reinterpret_cast<void*>(+f); // 使用+操作符获取函数指针
+        auto funcPtr = reinterpret_cast<void*>(+f); // 使用+操作符获取函数指针
         return CachedFunctionFactory::GetCachedFunction(funcPtr, func, time);
     }
     template<typename F>
