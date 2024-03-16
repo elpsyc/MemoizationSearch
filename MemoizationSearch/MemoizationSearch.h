@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <memory>
 #include <mutex>
+#include<typeindex>
 typedef unsigned long       _DWORD;
 #define INLINE inline
 #define NOEXCEPT noexcept
@@ -77,55 +78,63 @@ namespace nonstd {
     };
     template <typename F>
     struct function_traits : function_traits<decltype(&F::operator())> {};
+
     template <typename R, typename... Args>
     struct function_traits<R(*)(Args...)> {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
+
     template <typename R, typename... Args>
     struct function_traits<std::function<R(Args...)>> {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
+
     template <typename ClassType, typename R, typename... Args>
     struct function_traits<R(ClassType::*)(Args...) const> {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
+
+    class CachedFunctionFactory {
+        static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> cache_;
+    public:
+        template <typename R, typename... Args>
+        static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, _DWORD cacheTime = CacheNormalTTL) {
+            std::type_index key = std::type_index(typeid(CachedFunction<R, Args...>));
+            auto ptrKey = funcPtr; // 使用函数指针地址或唯一标识作为键
+            auto& funcMap = cache_[key];
+            if (funcMap.find(ptrKey) == funcMap.end()) {
+                auto cachedFunc = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
+                funcMap[ptrKey] = cachedFunc;
+            }
+            return *std::static_pointer_cast<CachedFunction<R, Args...>>(funcMap[ptrKey]);
+        }
+        static void ClearCache() { cache_.clear(); }
+    };
+    // 在CachedFunctionFactory所在的CPP文件中
+    std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::cache_;
+
     template<typename F, size_t... Is>
-    INLINE auto makecached_impl(F&& f, _DWORD time, std::index_sequence<Is...>) NOEXCEPT {
+    inline auto makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) noexcept {
         using traits = function_traits<std::decay_t<F>>;
-        return CachedFunction<typename traits::return_type, std::tuple_element_t<Is, typename traits::args_tuple_type>...>(
-            std::function<typename traits::return_type(std::tuple_element_t<Is, typename traits::args_tuple_type>...)>(std::forward<F>(f)), time);
+
+        // 修正：确保我们可以正确地包装f为std::function
+        std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
+
+        // 这里改为使用函数对象或Lambda的hash值作为唯一标识符，对于普通函数，可以直接使用函数指针
+        void* funcPtr = reinterpret_cast<void*>(+f); // 使用+操作符获取函数指针
+
+        // 确保调用CachedFunctionFactory的方式正确
+        return CachedFunctionFactory::GetCachedFunction(funcPtr, func, time);
     }
+
     template<typename F>
-    INLINE auto makecached(F&& f, _DWORD time = CacheNormalTTL) NOEXCEPT {
+    inline auto makecached(F f, _DWORD time = CacheNormalTTL) noexcept {
         using traits = function_traits<std::decay_t<F>>;
-        return makecached_impl(std::forward<F>(f), time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
+        return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
     }
 }
 #undef INLINE
 #undef NOEXCEPT
-/*
-* 这段代码定义了一个C++中的缓存系统，用于记忆函数调用的结果，这可能有助于提高对于重复使用相同参数调用的昂贵操作的性能。它包括自定义std::tuple的哈希，通过CachedFunction类实现的缓存机制，以及用于函数类型推导的实用程序。
-
-std::tuple的自定义哈希
-通过为std::tuple计算所有元素的组合哈希值，来扩展std::hash以支持std::tuple。这是因为缓存使用的std::unordered_map需要可哈希的键，而默认情况下std::tuple没有哈希函数。
-CachedFunctionBase类
-一个抽象基类，为缓存函数定义了通用属性和行为，如管理缓存生命周期（cacheTime_）和清除缓存的虚拟方法（clearCache()）。
-CachedFunction<R, Args...>模板类
-一个从CachedFunctionBase继承的模板类，为具有参数(Args...)和返回类型(R)的函数实现缓存机制。
-它存储一个代表要缓存的可调用对象的std::function，一个从参数到结果的缓存映射，以及用于跟踪缓存条目何时应该失效的过期映射。
-operator()方法检查给定参数的缓存是否存在且未过期。如果是，它返回缓存的结果。否则，它计算结果，更新缓存，并返回新的结果。
-CachedFunction<R>的专门化
-CachedFunction模板的一个专门化版本，用于没有参数的函数。因为没有涉及参数，所以通过直接存储单个结果及其过期时间来简化了缓存。
-function_traits模板
-一组模板，用于推导函数的返回类型和参数类型。这用于根据给定函数自动推断实例化CachedFunction对象所需的类型。
-makecached和makecached_impl函数
-这些实用函数简化了CachedFunction对象的创建。makecached推导函数的签名，并将创建转发给makecached_impl，后者使用正确的类型实例化一个CachedFunction。
-使用std::function和std::unordered_map进行运行时多态和缓存。
-它旨在缓存函数调用的结果，这对于计算昂贵且预计会用相同的参数集重复调用这些函数的情况特别有用。
-缓存机制的实现灵活，可以应用于任意数量参数和不同返回类型的函数。
-如同为std::hash<std::tuple<T...>>所做的那样，扩展std命名空间通常不推荐，可能导致未定义行为。这里出于演示目的这么做。
-对于函数调用非常昂贵（例如，在计算时间上）且预期将这些函数与相同的参数集合重复调用多次的场景，这个缓存系统可能特别有用
- */
