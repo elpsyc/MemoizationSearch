@@ -28,6 +28,10 @@ namespace nonstd {
     protected:
         _DWORD cacheTime_;
     public:
+        CachedFunctionBase(const CachedFunctionBase&) = delete;
+        CachedFunctionBase& operator=(const CachedFunctionBase&) = delete;
+        CachedFunctionBase(CachedFunctionBase&&) = delete;
+        CachedFunctionBase& operator=(CachedFunctionBase&&) = delete;
         explicit CachedFunctionBase(_DWORD cacheTime = CacheNormalTTL) : cacheTime_(cacheTime) {}
         INLINE void setCacheTime(_DWORD cacheTime)NOEXCEPT { cacheTime_ = cacheTime; }
         INLINE virtual void clearCache() = 0;
@@ -78,25 +82,21 @@ namespace nonstd {
     };
     template <typename F>
     struct function_traits : function_traits<decltype(&F::operator())> {};
-
     template <typename R, typename... Args>
     struct function_traits<R(*)(Args...)> {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
-
     template <typename R, typename... Args>
     struct function_traits<std::function<R(Args...)>> {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
-
     template <typename ClassType, typename R, typename... Args>
     struct function_traits<R(ClassType::*)(Args...) const> {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
-
     class CachedFunctionFactory {
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> cache_;
     public:
@@ -113,23 +113,14 @@ namespace nonstd {
         }
         static void ClearCache() { cache_.clear(); }
     };
-    // 在CachedFunctionFactory所在的CPP文件中
     std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::cache_;
-
     template<typename F, size_t... Is>
     inline auto& makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) noexcept {
         using traits = function_traits<std::decay_t<F>>;
-
-        // 修正：确保我们可以正确地包装f为std::function
         std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
-
-        // 这里改为使用函数对象或Lambda的hash值作为唯一标识符，对于普通函数，可以直接使用函数指针
         void* funcPtr = reinterpret_cast<void*>(+f); // 使用+操作符获取函数指针
-
-        // 确保调用CachedFunctionFactory的方式正确
         return CachedFunctionFactory::GetCachedFunction(funcPtr, func, time);
     }
-
     template<typename F>
     inline auto& makecached(F f, _DWORD time = CacheNormalTTL) noexcept {
         using traits = function_traits<std::decay_t<F>>;

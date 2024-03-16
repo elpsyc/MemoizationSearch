@@ -8,7 +8,7 @@ int foo1() {
     return 36;
 }
 int main() {
-    auto cachedFoo = nonstd::makecached([](int a) {
+    auto &cachedFoo = nonstd::makecached([](int a) {
         std::cout << "foo" << std::endl;
         return a;
     });
