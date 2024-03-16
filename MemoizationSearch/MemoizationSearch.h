@@ -44,7 +44,7 @@ namespace nonstd {
     public:
         explicit CachedFunction(std::function<R(Args...)> func, _DWORD cacheTime = CacheNormalTTL)
             : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
-        INLINE R operator()(Args... args) const NOEXCEPT {
+        INLINE R operator()(Args&&... args) const NOEXCEPT {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = expiry_.find(argsTuple);

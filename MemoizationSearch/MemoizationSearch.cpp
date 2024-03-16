@@ -12,10 +12,8 @@ int main() {
         std::cout << "foo" << std::endl;
         return a;
     });
-    auto& cachedFoo1 = nonstd::makecached(foo1);
-    auto& cachedFoo2 = nonstd::makecached(foo1);
-    std::cout << &cachedFoo1 << std::endl;
-    std::cout << &cachedFoo2 << std::endl;
+
+    std::cout << cachedFoo(35) << std::endl;
     
     return 0;
 }
