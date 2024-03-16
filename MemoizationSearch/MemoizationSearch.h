@@ -43,21 +43,28 @@ namespace nonstd {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = expiry_.find(argsTuple);
+
+            // 检查缓存是否存在且未过期
             if (it != expiry_.end() && it->second > now) {
                 return cache_.at(argsTuple);
             }
-            else {
-                static std::mutex mtx;
-                std::unique_lock<std::mutex> lock(mtx,std::defer_lock);//上延迟锁
-                if (lock.try_lock()) {
-                     expiry_.erase(it);
-                     lock.unlock();
-                }
-                return this->operator()(args...);
+
+            // 缓存不存在或已过期
+            static std::mutex mtx; // 静态互斥锁
+            std::unique_lock<std::mutex> lock(mtx); // 直接锁定，不使用defer_lock
+
+            // 因为在获取锁的过程中缓存可能已被更新，所以需要再次检查
+            it = expiry_.find(argsTuple);
+            if (it != expiry_.end() && it->second > now) {
+                // 如果现在缓存是最新的，直接返回缓存结果
+                return cache_.at(argsTuple);
             }
+
+            // 计算新值并更新缓存
             R result = std::apply(func_, argsTuple);
             cache_[argsTuple] = result;
             expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
+
             return result;
         }
         void clearCache() override {
