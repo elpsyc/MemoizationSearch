@@ -6,15 +6,15 @@
 #include <memory>
 #include <mutex>
 typedef unsigned long       _DWORD;
+#define INLINE inline
+#define NOEXCEPT noexcept
 namespace std {
     template<typename... T>
     struct hash<tuple<T...>> {
-        size_t operator()(const tuple<T...>& t) const noexcept {
-            return hash_value(t, index_sequence_for<T...>{});
-        }
+        INLINE size_t operator()(const tuple<T...>& t) const NOEXCEPT {return hash_value(t, index_sequence_for<T...>{});}
     private:
         template<typename Tuple, size_t... I>
-        static size_t hash_value(const Tuple& t, index_sequence<I...>) noexcept {
+        INLINE static size_t hash_value(const Tuple& t, index_sequence<I...>) NOEXCEPT {
             size_t seed = 0;
             (..., (seed ^= hash<typename tuple_element<I, Tuple>::type>{}(get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
             return seed;
@@ -28,8 +28,8 @@ namespace nonstd {
         _DWORD cacheTime_;
     public:
         explicit CachedFunctionBase(_DWORD cacheTime = CacheNormalTTL) : cacheTime_(cacheTime) {}
-        void setCacheTime(_DWORD cacheTime) { cacheTime_ = cacheTime; }
-        virtual void clearCache() = 0;
+        INLINE void setCacheTime(_DWORD cacheTime)NOEXCEPT { cacheTime_ = cacheTime; }
+        INLINE virtual void clearCache() = 0;
     };
     template<typename R, typename... Args>
     class CachedFunction : public CachedFunctionBase {
@@ -39,35 +39,21 @@ namespace nonstd {
     public:
         explicit CachedFunction(std::function<R(Args...)> func, _DWORD cacheTime = CacheNormalTTL)
             : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
-        R operator()(Args... args) const {
+        INLINE R operator()(Args... args) const NOEXCEPT {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = expiry_.find(argsTuple);
-
-            // 检查缓存是否存在且未过期
-            if (it != expiry_.end() && it->second > now) {
-                return cache_.at(argsTuple);
-            }
-
-            // 缓存不存在或已过期
-            static std::mutex mtx; // 静态互斥锁
-            std::unique_lock<std::mutex> lock(mtx); // 直接锁定，不使用defer_lock
-
-            // 因为在获取锁的过程中缓存可能已被更新，所以需要再次检查
+            if (it != expiry_.end() && it->second > now) return cache_.at(argsTuple);
+            static std::mutex mtx;
+            std::unique_lock<std::mutex> lock(mtx);
             it = expiry_.find(argsTuple);
-            if (it != expiry_.end() && it->second > now) {
-                // 如果现在缓存是最新的，直接返回缓存结果
-                return cache_.at(argsTuple);
-            }
-
-            // 计算新值并更新缓存
+            if (it != expiry_.end() && it->second > now) return cache_.at(argsTuple);
             R result = std::apply(func_, argsTuple);
             cache_[argsTuple] = result;
             expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
-
             return result;
         }
-        void clearCache() override {
+        INLINE void clearCache() override{
             cache_.clear();
             expiry_.clear();
         }
@@ -80,16 +66,14 @@ namespace nonstd {
     public:
         explicit CachedFunction(std::function<R()> func, _DWORD cacheTime = CacheNormalTTL)
             : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
-        R operator()() const {
+        INLINE R operator()() const NOEXCEPT {
             auto now = std::chrono::steady_clock::now();
-            if (expiry_ > now) {
-                return cachedResult_;
-            }
+            if (expiry_ > now) return cachedResult_;
             cachedResult_ = func_();
             expiry_ = now + std::chrono::milliseconds(cacheTime_);
             return cachedResult_;
         }
-        void clearCache() override {}
+        INLINE void clearCache() override{}
     };
     template <typename F>
     struct function_traits : function_traits<decltype(&F::operator())> {};
@@ -109,17 +93,19 @@ namespace nonstd {
         using args_tuple_type = std::tuple<Args...>;
     };
     template<typename F, size_t... Is>
-    auto makecached_impl(F&& f, _DWORD time, std::index_sequence<Is...>) {
+    INLINE auto makecached_impl(F&& f, _DWORD time, std::index_sequence<Is...>) NOEXCEPT {
         using traits = function_traits<std::decay_t<F>>;
         return CachedFunction<typename traits::return_type, std::tuple_element_t<Is, typename traits::args_tuple_type>...>(
             std::function<typename traits::return_type(std::tuple_element_t<Is, typename traits::args_tuple_type>...)>(std::forward<F>(f)), time);
     }
     template<typename F>
-    auto makecached(F&& f, _DWORD time = CacheNormalTTL) {
+    INLINE auto makecached(F&& f, _DWORD time = CacheNormalTTL) NOEXCEPT {
         using traits = function_traits<std::decay_t<F>>;
         return makecached_impl(std::forward<F>(f), time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
     }
 }
+#undef INLINE
+#undef NOEXCEPT
 /*
 * 这段代码定义了一个C++中的缓存系统，用于记忆函数调用的结果，这可能有助于提高对于重复使用相同参数调用的昂贵操作的性能。它包括自定义std::tuple的哈希，通过CachedFunction类实现的缓存机制，以及用于函数类型推导的实用程序。
 
