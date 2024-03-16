@@ -4,6 +4,7 @@
 #include <tuple>
 #include <type_traits>
 #include <memory>
+#include <mutex>
 typedef unsigned long       _DWORD;
 namespace std {
     template<typename... T>
@@ -46,7 +47,12 @@ namespace nonstd {
                 return cache_.at(argsTuple);
             }
             else {
-                expiry_.erase(it);
+                static std::mutex mtx;
+                std::unique_lock<std::mutex> lock(mtx,std::defer_lock);//ÉÏÑÓ³ÙËø
+                if (lock.try_lock()) {
+                     expiry_.erase(it);
+                     lock.unlock();
+                }
                 return this->operator()(args...);
             }
             R result = std::apply(func_, argsTuple);
