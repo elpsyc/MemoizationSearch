@@ -34,7 +34,7 @@ namespace nonstd {
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
         inline R operator()(Args&&... args) const{
-            std::unique_lock<std::mutex> lock(m_mutex);
+            
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
@@ -42,8 +42,11 @@ namespace nonstd {
             it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
             auto result = std::apply(m_func, argsTuple);
-            m_cache[argsTuple] = result;
-            m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_cache[argsTuple] = result;
+                m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
+            }
             return result;
         }
         inline void clearArgsCache() {
