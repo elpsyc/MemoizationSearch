@@ -1,6 +1,6 @@
 ﻿#include "MemoizationSearch.h"
 #include <iostream>
-#include<Windows.h>
+#include <Windows.h>
 int foo(int a) {
     return a;
 }
