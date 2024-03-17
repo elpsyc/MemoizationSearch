@@ -15,12 +15,16 @@ DWORD64 Fibonacci(int n) {
     return fib(n - 1) + fib(n - 2);
 }
 int main() {
-    auto &cachedFoo = nonstd::makecached([](int a) {
+    auto &cachedlambda = nonstd::makecached([](int a) {
         std::cout << "foo" << std::endl;
         return a;
     });
     auto& noparam = nonstd::makecached(foo1);
-    std::cout << cachedFoo(35) << std::endl;//有参数的情况
+    auto& noparamlambda = nonstd::makecached([]() {
+        std::cout << "noparamlambda" << std::endl;
+        return 37;
+        });
+    std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << noparam() << std::endl;//有参数的情况
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
@@ -30,12 +34,12 @@ int main() {
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
+    std::cout << noparamlambda() << std::endl;
+    std::cout << noparamlambda() << std::endl;
+    std::cout << noparamlambda() << std::endl;
+    std::cout << noparamlambda() << std::endl;
+    std::cout << noparamlambda() << std::endl;
+    std::cout << noparamlambda() << std::endl;
     std::cout << Fibonacci(256) << std::endl;
     
     return 0;
