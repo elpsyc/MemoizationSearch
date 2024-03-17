@@ -10,10 +10,8 @@ typedef unsigned long  _DWORD;
 #define INLINE inline
 #define NOEXCEPT noexcept
 namespace std {
-    template<typename... T>
-    struct hash<tuple<T...>> {
+    template<typename... T>struct hash<tuple<T...>> {
         INLINE size_t operator()(const tuple<T...>& t) const NOEXCEPT {return hash_value(t, index_sequence_for<T...>{});}
-    private:
         template<typename Tuple, size_t... I>INLINE static size_t hash_value(const Tuple& t, index_sequence<I...>) NOEXCEPT {
             size_t seed = 0;
             (..., (seed ^= hash<typename tuple_element<I, Tuple>::type>{}(get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
@@ -97,8 +95,7 @@ namespace nonstd {
     template<typename F, size_t... Is>INLINE auto& makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) NOEXCEPT {
         using traits = function_traits<std::decay_t<F>>;
         std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
-        auto funcPtr = reinterpret_cast<void*>(+f); // 使用+操作符获取函数指针
-        return CachedFunctionFactory::GetCachedFunction(funcPtr, func, time);
+        return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
     }
     template<typename F>INLINE auto& makecached(F f, _DWORD time = CacheNormalTTL) NOEXCEPT {
         using traits = function_traits<std::decay_t<F>>;
