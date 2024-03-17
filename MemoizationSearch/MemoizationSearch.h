@@ -93,7 +93,7 @@ namespace nonstd {
         std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
     }
-    template<typename F>inline auto& makecached(F f, unsigned long time = g_CacheNormalTTL) noexcept {
+    template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL) noexcept {
         return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});
     }
 }
