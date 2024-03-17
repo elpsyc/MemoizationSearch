@@ -12,7 +12,7 @@ template<typename... T>struct std::hash<std::tuple<T...>> {
     inline size_t operator()(const tuple<T...>& t) const noexcept { return hash_value(t, std::index_sequence_for<T...>{}); }
     template<typename Tuple, size_t... I>inline static size_t hash_value(const Tuple& t, std::index_sequence<I...>) noexcept {
         size_t seed = 0;
-        (..., (seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
+        (..., (seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
         return seed;
     }
 };
