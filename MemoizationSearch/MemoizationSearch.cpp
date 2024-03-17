@@ -1,5 +1,6 @@
 ﻿#include "MemoizationSearch.h"
 #include <iostream>
+#include<Windows.h>
 int foo(int a) {
     return a;
 }
@@ -7,7 +8,7 @@ int foo1() {
     std::cout << "foo1" << std::endl;
     return 36;
 }
-__int64 Fibonacci(int n) {
+DWORD64 Fibonacci(int n) {
     if (n <= 1) return n;
     //利用nonstd::makecached函数生成一个缓存搜索的函数
     auto& fib = nonstd::makecached(Fibonacci);
@@ -35,7 +36,7 @@ int main() {
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
-    std::cout << Fibonacci(60) << std::endl;
+    std::cout << Fibonacci(256) << std::endl;
     
     return 0;
 }
