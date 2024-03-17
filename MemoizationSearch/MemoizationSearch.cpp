@@ -20,13 +20,14 @@ int main() {
         return a;
     });
     auto& noparam = nonstd::makecached(foo1);
+    auto& noparam2 = nonstd::makecached(foo1);
     auto& noparamlambda = nonstd::makecached([]() {
         std::cout << "noparamlambda" << std::endl;
         return 37;
         });
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
-    std::cout << noparam() << std::endl;//有参数的情况
-    std::cout << noparam() << std::endl;
+    std::cout << &noparam << std::endl;//有参数的情况
+    std::cout << &noparam2 << std::endl;//地址相同实例只有一个
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
