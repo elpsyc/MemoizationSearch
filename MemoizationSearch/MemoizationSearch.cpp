@@ -13,11 +13,27 @@ int main() {
         return a;
     });
     auto& noparam = nonstd::makecached([]() {
-        std::cout << "no param" << std::endl;
+        static int count=0;
+        std::cout << "no param count:" << ++count << std::endl;
         return 10;
         });
     std::cout << cachedFoo(35) << std::endl;//有参数的情况
     std::cout << noparam() << std::endl;//有参数的情况
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
     
     return 0;
 }
