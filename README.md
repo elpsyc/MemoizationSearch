@@ -32,28 +32,30 @@ int main(){
 	return 0;
 }
 ```
-#### 基础组件
-`CacheItem` 类：用于存储缓存项，包含一个值和一个过期时间。`IsValid` 方法用于检查缓存项是否仍然有效。
+std::hash 对 std::tuple 的特化
+首先，代码通过特化 std::hash 来允许使用 std::tuple 作为键在 std::unordered_map 中。这是因为标准库默认不为 std::tuple 提供哈希函数。这里使用了一个递归的技巧，结合了所有元素的哈希值来生成一个整体的哈希值。
 
-`SimpleBasicCache` 类：一个基本的线程安全缓存实现，使用 `concurrent_unordered_map` 来存储缓存项。它提供了异步添加缓存项 (`AddAysncCache`)、删除缓存项 (`erase`) 和查找缓存项 (`find`) 的方法。
+nonstd 命名空间
+接着，定义了一个 nonstd 命名空间，这里放置了所有自定义的缓存相关类和函数。
 
-`CachedFunction` 类：用于缓存函数调用结果的主要类。它接收一个 `std::function` 和一个可选的缓存有效时间。`operator()` 被重载以接收任意数量的参数，并根据这些参数来查找或生成缓存项。如果缓存命中，则返回缓存的结果；否则，计算新结果、缓存并返回它。
+CachedFunctionBase 类
+CachedFunctionBase 是一个基础类，用于存储缓存时间。它不能被拷贝或移动，保证了缓存管理的一致性。
 
-#### 工厂组件
-`CachedFunctionFactory` 类：一个工厂类，用于创建和管理 `CachedFunction` 实例。它使用一个静态的 `concurrent_map` 来存储所有的缓存函数实例。`GetCachedFunction` 方法检查是否已有相应的缓存函数实例，如果没有则创建一个新的实例并返回。
+CachedFunction 类模板
+CachedFunction 类模板用于实际缓存函数调用的结果。它支持不同的参数类型和返回类型。这个类存储了一个函数、一个结果缓存和一个过期时间缓存。调用操作符重载(operator())会检查给定参数的结果是否已经缓存且未过期，如果是，则返回缓存的结果；否则，会调用实际的函数，更新缓存，并设置新的过期时间。
 
-`makecached` 函数模板：一个辅助函数，用于简化 `CachedFunction` 实例的创建。它接收一个函数（或者可调用对象）和一个缓存有效时间，然后返回一个对应的 `CachedFunction` 引用。这个函数主要是调用 `CachedFunctionFactory` 来实现的。
+对于不接受任何参数的函数，提供了一个特化版本，这个版本简化了存储，因为不需要存储参数。
 
-#### 关键概念和实现细节
-模板和类型推导：`CachedFunction` 和 `makecached` 都使用了模板编程和类型推导来处理不同的函数签名和调用参数。
+function_traits 模板
+function_traits 模板用于提取函数类型的返回类型和参数类型。它支持普通函数指针、std::function 和成员函数指针。
 
-线程安全：`SimpleBasicCache` 类使用了 `std::shared_mutex` 来实现线程安全，确保并发访问缓存时的数据一致性。
+CachedFunctionFactory 类
+CachedFunctionFactory 类提供了一个静态方法 GetCachedFunction，用于创建或获取已经存在的 CachedFunction 实例。它使用一个全局的静态容器来存储所有的缓存实例，这个容器根据函数类型和函数指针来区分不同的缓存。
 
-异步和期货：`AddAysncCache` 方法使用 `std::async` 来异步添加缓存项，以提高性能并避免阻塞主线程。
-
-函数缓存的使用场景：这种缓存机制特别适合用于计算代价高昂且结果可预测的函数，比如递归计算、数据库查询或者文件I/O操作。
+makecached 函数模板
+最后，makecached 函数模板是一个方便的包装器，用于创建 CachedFunction 实例。它自动推导函数类型，并将函数包装为 std::function，然后调用 CachedFunctionFactory 来获取或创建一个缓存实例。
 ### 编译环境
-Visual Studio 2019以上IDE
+Visual Studio 2022
 项目使用C++20标准 
 
 ### 注意
