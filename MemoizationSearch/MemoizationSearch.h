@@ -27,8 +27,7 @@ namespace nonstd {
         explicit CachedFunctionBase(unsigned long cacheTime = CacheNormalTTL) : cacheTime_(cacheTime) {}
         inline void setCacheTime(unsigned long cacheTime)noexcept { cacheTime_ = cacheTime; }
     };
-    template<typename R, typename... Args>
-    class CachedFunction : public CachedFunctionBase {
+    template<typename R, typename... Args>class CachedFunction : public CachedFunctionBase {
         mutable std::function<R(Args...)> func_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
@@ -50,8 +49,7 @@ namespace nonstd {
         }
         inline void clearArgsCache(){ cache_.clear(), expiry_.clear(); }
     };
-    template<typename R>
-    class CachedFunction<R> : public CachedFunctionBase {
+    template<typename R> class CachedFunction<R> : public CachedFunctionBase {
         mutable std::function<R()> func_;
         mutable R cachedResult_;
         mutable std::chrono::steady_clock::time_point expiry_;
@@ -78,9 +76,8 @@ namespace nonstd {
         using return_type = R;
         using args_tuple_type = std::tuple<Args...>;
     };
-    class CachedFunctionFactory {
+    struct CachedFunctionFactory {
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> cache_;
-    public:
         template <typename R, typename... Args> static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = CacheNormalTTL) {
             auto& funcMap = cache_[std::type_index(typeid(CachedFunction<R, Args...>))];
             if (funcMap.find(funcPtr) == funcMap.end())funcMap[funcPtr] = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
