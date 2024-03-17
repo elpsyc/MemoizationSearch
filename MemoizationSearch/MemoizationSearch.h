@@ -6,7 +6,6 @@
 #include <memory>
 #include <mutex>
 #include <typeindex>
-typedef unsigned long  _DWORD;
 #define INLINE inline
 #define NOEXCEPT noexcept
 namespace std {
@@ -20,15 +19,15 @@ namespace std {
     };
 }
 namespace nonstd {
-    constexpr _DWORD CacheNormalTTL = 200;
+    constexpr unsigned long CacheNormalTTL = 200;
     struct CachedFunctionBase { 
-        _DWORD cacheTime_;
+        unsigned long cacheTime_;
         CachedFunctionBase(const CachedFunctionBase&) = delete;
         CachedFunctionBase& operator=(const CachedFunctionBase&) = delete;
         CachedFunctionBase(CachedFunctionBase&&) = delete;
         CachedFunctionBase& operator=(CachedFunctionBase&&) = delete;
-        explicit CachedFunctionBase(_DWORD cacheTime = CacheNormalTTL) : cacheTime_(cacheTime) {}
-        INLINE void setCacheTime(_DWORD cacheTime)NOEXCEPT { cacheTime_ = cacheTime; }
+        explicit CachedFunctionBase(unsigned long cacheTime = CacheNormalTTL) : cacheTime_(cacheTime) {}
+        INLINE void setCacheTime(unsigned long cacheTime)NOEXCEPT { cacheTime_ = cacheTime; }
     };
     template<typename R, typename... Args>
     class CachedFunction : public CachedFunctionBase {
@@ -36,7 +35,7 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
     public:
-        explicit CachedFunction(const std::function<R(Args...)>& func, _DWORD cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
+        explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         INLINE R operator()(Args&&... args) const NOEXCEPT {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
@@ -59,7 +58,7 @@ namespace nonstd {
         mutable R cachedResult_;
         mutable std::chrono::steady_clock::time_point expiry_;
     public:
-        explicit CachedFunction(const std::function<R()>& func, _DWORD cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
+        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         INLINE R operator()() const NOEXCEPT {
             auto now = std::chrono::steady_clock::now();
             if (expiry_ > now) return cachedResult_;
@@ -84,7 +83,7 @@ namespace nonstd {
     class CachedFunctionFactory {
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> cache_;
     public:
-        template <typename R, typename... Args> static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, _DWORD cacheTime = CacheNormalTTL) {
+        template <typename R, typename... Args> static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = CacheNormalTTL) {
             auto& funcMap = cache_[std::type_index(typeid(CachedFunction<R, Args...>))];
             if (funcMap.find(funcPtr) == funcMap.end())funcMap[funcPtr] = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
             return *std::static_pointer_cast<CachedFunction<R, Args...>>(funcMap[funcPtr]);
@@ -92,12 +91,12 @@ namespace nonstd {
         static void ClearCache() { cache_.clear(); }
     };
     std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::cache_;
-    template<typename F, size_t... Is>INLINE auto& makecached_impl(F f, _DWORD time, std::index_sequence<Is...>) NOEXCEPT {
+    template<typename F, size_t... Is>INLINE auto& makecached_impl(F f, unsigned long time, std::index_sequence<Is...>) NOEXCEPT {
         using traits = function_traits<std::decay_t<F>>;
         std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
     }
-    template<typename F>INLINE auto& makecached(F f, _DWORD time = CacheNormalTTL) NOEXCEPT {
+    template<typename F>INLINE auto& makecached(F f, unsigned long time = CacheNormalTTL) NOEXCEPT {
         using traits = function_traits<std::decay_t<F>>;
         return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
     }
