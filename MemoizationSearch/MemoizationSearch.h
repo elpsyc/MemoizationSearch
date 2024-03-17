@@ -58,6 +58,8 @@ namespace nonstd {
         inline R operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry > now) return m_cachedResult;
+            static std::mutex mtx;
+            std::unique_lock<std::mutex> lock(mtx);
             m_cachedResult = m_func();
             m_expiry = now + std::chrono::milliseconds(m_cacheTime);
             return m_cachedResult;
@@ -92,8 +94,7 @@ namespace nonstd {
         return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
     }
     template<typename F>inline auto& makecached(F f, unsigned long time = g_CacheNormalTTL) noexcept {
-        using traits = function_traits<std::decay_t<F>>;
-        return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
+        return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});
     }
 }
 #endif // !MEMOIZATIONSEARCH
