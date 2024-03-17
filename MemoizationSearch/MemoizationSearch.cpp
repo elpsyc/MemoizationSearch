@@ -1,9 +1,6 @@
 ﻿#include "MemoizationSearch.h"
 #include <iostream>
 #include <Windows.h>
-int foo(int a) {
-    return a;
-}
 int foo1() {
     std::cout << "foo1" << std::endl;
     return 36;
@@ -24,7 +21,7 @@ int main() {
     auto& noparamlambda = nonstd::makecached([]() {
         std::cout << "noparamlambda" << std::endl;
         return 37;
-        });
+    });
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
@@ -44,6 +41,5 @@ int main() {
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
     std::cout << Fibonacci(256) << std::endl;
-    
     return 0;
 }
