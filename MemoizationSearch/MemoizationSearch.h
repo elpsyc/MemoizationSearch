@@ -91,3 +91,18 @@ namespace nonstd {
     }
 }
 #endif // !MEMOIZATIONSEARCH
+/*
+* 自定义std::hash特化：代码首先为std::tuple类型特化了std::hash结构，以便可以将tuple作为键用在std::unordered_map中。这是通过计算元组中每个元素的哈希值并将它们组合成一个单一的哈希值来实现的。
+
+CachedFunctionBase结构体：这是一个基础结构体，定义了缓存有效时间m_cacheTime。它提供了设置缓存时间的方法，但禁止了拷贝和移动构造函数，确保其实例不会被不当复制或移动。
+
+CachedFunction模板类：这是模板化的主要功能实现类。对于具有不同参数列表的函数，它使用std::function来存储函数指针，并使用两个std::unordered_map来缓存函数的结果和结果的到期时间。它重载了operator()，使得当调用缓存化函数时，会先检查缓存是否有效，如果有效就返回缓存结果，否则计算新结果并更新缓存。
+
+无参数的特化：对于无参数函数的特殊处理，提供了一个特化版本的CachedFunction，它简化了存储和获取缓存结果的逻辑。
+
+function_traits模板结构体：用于提取函数的返回类型和参数类型，支持普通函数指针、std::function以及成员函数指针。这对于将函数封装为std::function时，能够正确处理参数类型非常关键。
+
+CachedFunctionFactory类：提供了一个静态方法GetCachedFunction，用于根据函数指针和缓存时间创建或获取一个CachedFunction实例。同时，它管理一个全局的缓存实例映射，用于存储和重用CachedFunction实例。还提供了一个ClearCache方法，用于清除所有缓存。
+
+makecached和makecached_impl函数：这是一个便利函数，用于简化CachedFunction实例的创建。它利用function_traits和完美转发来自动推导函数的参数和返回类型，并创建相应的CachedFunction实例。
+*/
