@@ -8,16 +8,14 @@
 #include <typeindex>
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
-namespace std {
-    template<typename... T>struct hash<tuple<T...>> {
-        inline size_t operator()(const tuple<T...>& t) const noexcept { return hash_value(t, index_sequence_for<T...>{}); }
-        template<typename Tuple, size_t... I>inline static size_t hash_value(const Tuple& t, index_sequence<I...>) noexcept {
-            size_t seed = 0;
-            (..., (seed ^= hash<typename tuple_element<I, Tuple>::type>{}(get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
-            return seed;
-        }
-    };
-}
+template<typename... T>struct std::hash<std::tuple<T...>> {
+    inline size_t operator()(const tuple<T...>& t) const noexcept { return hash_value(t, std::index_sequence_for<T...>{}); }
+    template<typename Tuple, size_t... I>inline static size_t hash_value(const Tuple& t, std::index_sequence<I...>) noexcept {
+        size_t seed = 0;
+        (..., (seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
+        return seed;
+    }
+};
 namespace nonstd {
     constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
@@ -89,8 +87,7 @@ namespace nonstd {
     };
     std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::m_cache;
     template<typename F, size_t... Is>inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>) noexcept {
-        using traits = function_traits<std::decay_t<F>>;
-        std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
+        std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
     }
     template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL) noexcept {
