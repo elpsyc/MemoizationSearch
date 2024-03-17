@@ -1,13 +1,35 @@
-﻿#include <iostream>
-#include"MemoizationSearch.h"
-//斐波那契数列的缓存搜索
-__int64 Fibonacci(int n) {
-	if (n <= 1) return n;
-	//利用nonstd::makecached函数生成一个缓存搜索的函数
-	auto& fib = nonstd::makecached(Fibonacci);
-	return fib(n - 1) + fib(n - 2);
+﻿#include "MemoizationSearch.h"
+#include <iostream>
+int foo(int a) {
+    return a;
+}
+int foo1() {
+    std::cout << "foo1" << std::endl;
+    return 36;
 }
 int main() {
-	std::cout << Fibonacci(60);
-	return 0;
+    auto &cachedFoo = nonstd::makecached([](int a) {
+        std::cout << "foo" << std::endl;
+        return a;
+    });
+    auto& noparam = nonstd::makecached(foo1);
+    std::cout << cachedFoo(35) << std::endl;//有参数的情况
+    std::cout << noparam() << std::endl;//有参数的情况
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    std::cout << noparam() << std::endl;
+    
+    return 0;
 }
