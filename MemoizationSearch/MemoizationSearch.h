@@ -37,8 +37,6 @@ namespace nonstd {
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
-            static std::mutex mtx;
-            std::unique_lock<std::mutex> lock(mtx);
             it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
             auto result = std::apply(m_func, argsTuple);
@@ -56,8 +54,6 @@ namespace nonstd {
         inline R operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry > now) return m_cachedResult;
-            static std::mutex mtx;
-            std::unique_lock<std::mutex> lock(mtx);
             m_cachedResult = m_func();
             m_expiry = now + std::chrono::milliseconds(m_cacheTime);
             return m_cachedResult;
