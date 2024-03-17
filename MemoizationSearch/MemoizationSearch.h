@@ -88,7 +88,7 @@ namespace nonstd {
         static void ClearCache() { m_cache.clear(); }
     };
     std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::m_cache;
-    template<typename F, size_t... Is>inline auto& makecached_impl(F f, unsigned long time, std::index_sequence<Is...>) noexcept {
+    template<typename F, size_t... Is>inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>) noexcept {
         using traits = function_traits<std::decay_t<F>>;
         std::function<typename traits::return_type(typename std::tuple_element<Is, typename traits::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
