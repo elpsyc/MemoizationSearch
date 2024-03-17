@@ -29,11 +29,10 @@ namespace nonstd {
         explicit CachedFunctionBase(unsigned long cacheTime = CacheNormalTTL) : cacheTime_(cacheTime) {}
         inline void setCacheTime(unsigned long cacheTime)noexcept { cacheTime_ = cacheTime; }
     };
-    template<typename R, typename... Args>class CachedFunction : public CachedFunctionBase {
+    template<typename R, typename... Args>struct CachedFunction : public CachedFunctionBase {
         mutable std::function<R(Args...)> func_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
-    public:
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = CacheNormalTTL) : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         inline R operator()(Args&&... args) const noexcept {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
