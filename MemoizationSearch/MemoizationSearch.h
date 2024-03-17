@@ -103,7 +103,7 @@ namespace nonstd {
 }
 #endif // !MEMOIZATIONSEARCH
 /*
-* 编辑时间:2024.03.24
+* 编辑时间:2024.03.17
 * 自定义std::hash特化：代码首先为std::tuple类型特化了std::hash结构，以便可以将tuple作为键用在std::unordered_map中。这是通过计算元组中每个元素的哈希值并将它们组合成一个单一的哈希值来实现的。
 
 CachedFunctionBase结构体：这是一个基础结构体，定义了缓存有效时间m_cacheTime。它提供了设置缓存时间的方法，但禁止了拷贝和移动构造函数，确保其实例不会被不当复制或移动。
