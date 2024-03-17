@@ -6,9 +6,11 @@
 #include <memory>
 #include <mutex>
 #include <typeindex>
+#ifndef MEMOIZATIONSEARCH
+#define MEMOIZATIONSEARCH
 namespace std {
     template<typename... T>struct hash<tuple<T...>> {
-        inline size_t operator()(const tuple<T...>& t) const noexcept {return hash_value(t, index_sequence_for<T...>{});}
+        inline size_t operator()(const tuple<T...>& t) const noexcept { return hash_value(t, index_sequence_for<T...>{}); }
         template<typename Tuple, size_t... I>inline static size_t hash_value(const Tuple& t, index_sequence<I...>) noexcept {
             size_t seed = 0;
             (..., (seed ^= hash<typename tuple_element<I, Tuple>::type>{}(get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
@@ -18,7 +20,7 @@ namespace std {
 }
 namespace nonstd {
     constexpr unsigned long CacheNormalTTL = 200;
-    struct CachedFunctionBase { 
+    struct CachedFunctionBase {
         unsigned long cacheTime_;
         CachedFunctionBase(const CachedFunctionBase&) = delete;
         CachedFunctionBase& operator=(const CachedFunctionBase&) = delete;
@@ -32,7 +34,7 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> cache_;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> expiry_;
     public:
-        explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
+        explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = CacheNormalTTL) : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         inline R operator()(Args&&... args) const noexcept {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
@@ -47,14 +49,13 @@ namespace nonstd {
             expiry_[argsTuple] = now + std::chrono::milliseconds(cacheTime_);
             return result;
         }
-        inline void clearArgsCache(){ cache_.clear(), expiry_.clear(); }
+        inline void clearArgsCache() { cache_.clear(), expiry_.clear(); }
     };
-    template<typename R> class CachedFunction<R> : public CachedFunctionBase {
+    template<typename R> struct CachedFunction<R> : public CachedFunctionBase {
         mutable std::function<R()> func_;
         mutable R cachedResult_;
         mutable std::chrono::steady_clock::time_point expiry_;
-    public:
-        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = CacheNormalTTL): CachedFunctionBase(cacheTime), func_(std::move(func)) {}
+        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = CacheNormalTTL) : CachedFunctionBase(cacheTime), func_(std::move(func)) {}
         inline R operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (expiry_ > now) return cachedResult_;
@@ -96,3 +97,4 @@ namespace nonstd {
         return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename traits::args_tuple_type>::value>{});
     }
 }
+#endif // !MEMOIZATIONSEARCH
