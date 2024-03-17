@@ -93,7 +93,7 @@ namespace nonstd {
             m_cache.clear(); 
         }
     };
-    decltype(CachedFunctionFactory::m_cache) nonstd::CachedFunctionFactory::m_cache;
+    decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
     template<typename F, size_t... Is>inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>) noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(&f, func, time);
