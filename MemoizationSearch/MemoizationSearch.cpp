@@ -11,29 +11,53 @@ DWORD64 Fibonacci(int n) {
     if (n <= 1) return n;
     return fib(n - 1) + fib(n - 2);
 }
+HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());
+template<typename T>
+T read(LPVOID addr) {
+    T t{};
+	ReadProcessMemory(hProcess, (LPCVOID)addr, &t, sizeof(T), NULL);
+	return t;
+}
+template<typename T>
+T ReadCache(LPVOID addr) {
+	auto & readcache = nonstd::makecached(read<T>);
+    T t = readcache((LPVOID)addr);
+	return t;
+}
+int data = 100;
 int main() {
+    //有参数的lamda的缓存版本
     auto &cachedlambda = nonstd::makecached([](int a) {
         std::cout << "foo" << std::endl;
         return a;
     });
+    //无参数的函数的缓存版本
     auto& noparam = nonstd::makecached(foo1);
     auto& noparam2 = nonstd::makecached(foo1);
     auto& noparamlambda = nonstd::makecached([]() {
         std::cout << "noparamlambda" << std::endl;
         return 37;
     });
+    //有参数的lamda的缓存版本
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
+    //一个函数只会生成一个实例
     std::cout << &noparam << std::endl;//无参数的情况
     std::cout << &noparam2 << std::endl;//地址相同实例只有一个
+    //无参数函数的缓存版本
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
+    //无参数lambda的缓存版本
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
+    //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
+    //读取内存的缓存版本
+    std::cout << "data:" << ReadCache<int>((LPVOID)&data) << std::endl;
+    //在跨进程读取当中每一级偏移不用每次都去读取丢到缓存中就好了,比如说你读的是5级偏移,那么前4级偏移都可以丢到缓存中 最后一级偏移每次都去读取,这样就可以减少读取次数 默认缓存过期时间是200ms 这个时间可以自己设置 一般来说200ms人眼是感觉不到的
     return 0;
 }
 /*
