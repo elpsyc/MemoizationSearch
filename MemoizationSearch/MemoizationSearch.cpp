@@ -26,6 +26,9 @@ T ReadCache(LPVOID addr) {
 	return t;
 }
 int data = 100;
+void foonoreturn(int a) {
+
+}
 int main() {
     //有参数的lamda的缓存版本
     auto &cachedlambda = nonstd::makecached([](int a) {
@@ -56,6 +59,7 @@ int main() {
     std::cout << noparamlambda() << std::endl;
     //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
+    //auto& noreturn= nonstd::makecached(foonoreturn);没有返回值的函数不支持缓存
     //读取内存的缓存版本
     std::cout << "data:" << ReadCache<int>((LPVOID)&data) << std::endl;
     //在跨进程读取当中每一级偏移不用每次都去读取丢到缓存中就好了,比如说你读的是5级偏移,那么前4级偏移都可以丢到缓存中 最后一级偏移每次都去读取,这样就可以减少读取次数 默认缓存过期时间是200ms 这个时间可以自己设置 一般来说200ms人眼是感觉不到的,正常人的反应时间是250ms
