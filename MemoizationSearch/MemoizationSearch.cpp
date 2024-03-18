@@ -25,7 +25,7 @@ int main() {
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
-    std::cout << &noparam << std::endl;//有参数的情况
+    std::cout << &noparam << std::endl;//无参数的情况
     std::cout << &noparam2 << std::endl;//地址相同实例只有一个
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
