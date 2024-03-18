@@ -34,7 +34,6 @@ namespace nonstd {
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
         inline R operator()(Args&&... args) const{
-            std::unique_lock<std::mutex> lock(m_mutex);
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
@@ -42,6 +41,7 @@ namespace nonstd {
             it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
             auto result = std::apply(m_func, argsTuple);
+            std::unique_lock<std::mutex> lock(m_mutex);
             m_cache[argsTuple] = result;
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
             return result;
@@ -79,12 +79,13 @@ namespace nonstd {
     };
     struct CachedFunctionFactory {
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> m_cache;
-        template <typename R, typename... Args> static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) {
+        template <typename R, typename... Args>
+        static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) {
             static std::mutex m_mutex;
             std::unique_lock<std::mutex> lock(m_mutex);
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
-            if (funcMap.find(funcPtr) == funcMap.end())funcMap[funcPtr] = std::make_shared<CachedFunction<R, Args...>>(func, cacheTime);
-            return *std::static_pointer_cast<CachedFunction<R, Args...>>(funcMap[funcPtr]);
+            auto insertResult = funcMap.try_emplace(funcPtr, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
+            return *std::static_pointer_cast<CachedFunction<R, Args...>>(insertResult.first->second);
         }
         void ClearCache() {
             static std::mutex m_mutex;
@@ -92,10 +93,10 @@ namespace nonstd {
             m_cache.clear(); 
         }
     };
-    std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> nonstd::CachedFunctionFactory::m_cache;
+    decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
     template<typename F, size_t... Is>inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>) noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
-        return CachedFunctionFactory::GetCachedFunction(reinterpret_cast<void*>(+f), func, time);
+        return CachedFunctionFactory::GetCachedFunction(&f, func, time);
     }
     template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL) noexcept {
         return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});
