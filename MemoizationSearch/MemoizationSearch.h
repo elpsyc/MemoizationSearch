@@ -8,15 +8,42 @@
 #include <typeindex>
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
-template<typename... T>struct std::hash<std::tuple<T...>> {
-    inline size_t operator()(const tuple<T...>& t) const noexcept { return hash_value(t, std::index_sequence_for<T...>{}); }
-    template<typename Tuple, size_t... I>inline static size_t hash_value(const Tuple& t, std::index_sequence<I...>) noexcept {
+template<typename... T>
+struct Hasher {
+    static size_t hash_value(const std::tuple<T...>& t) noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
+private:
+    template<typename Tuple, size_t... I>static size_t hash_impl(const Tuple& t, std::index_sequence<I...>) noexcept {
         size_t seed = 0;
-        (..., (seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)));
+        using expander = int[];
+        (void)expander {
+            0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...
+        };
         return seed;
     }
 };
+namespace std {
+    template<typename... T>struct hash<std::tuple<T...>> {
+        size_t operator()(const std::tuple<T...>& t) const noexcept {
+            return Hasher<T...>::hash_value(t);
+        }
+    };
+}
 namespace nonstd {
+    template<size_t... Indices>struct index_sequence {};
+    template<size_t N, size_t... Indices>struct make_index_sequence : make_index_sequence<N - 1, N - 1, Indices...> {};
+    template<size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
+    template<typename F, typename Tuple, size_t... Indices>
+    auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {
+        return f(std::get<Indices>(std::forward<Tuple>(tuple))...);
+    }
+    template<typename F, typename Tuple>
+    auto apply(F&& f, Tuple&& tuple) -> decltype(auto) {
+        return apply_impl(
+            std::forward<F>(f),
+            std::forward<Tuple>(tuple),
+            make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{}
+        );
+    }
     constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
         unsigned long m_cacheTime;
@@ -40,7 +67,7 @@ namespace nonstd {
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
             it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
-            auto result = std::apply(m_func, argsTuple);
+            auto result = apply(m_func, argsTuple);
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache[argsTuple] = result;
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
