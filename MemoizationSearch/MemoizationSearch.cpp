@@ -5,10 +5,10 @@ int foo1() {
     std::cout << "foo1" << std::endl;
     return 36;
 }
+DWORD64 Fibonacci(int n);
+auto& fib = nonstd::makecached(Fibonacci);//一个函数只会生成一个实例
 DWORD64 Fibonacci(int n) {
     if (n <= 1) return n;
-    //利用nonstd::makecached函数生成一个缓存搜索的函数
-    auto& fib = nonstd::makecached(Fibonacci);//一个函数只会生成一个实例
     return fib(n - 1) + fib(n - 2);
 }
 int main() {
