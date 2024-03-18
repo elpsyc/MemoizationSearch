@@ -19,9 +19,10 @@ T read(LPVOID addr) {
 	return t;
 }
 template<typename T>
+auto& readcache = nonstd::makecached(read<T>);
+template<typename T>
 T ReadCache(LPVOID addr) {
-	auto & readcache = nonstd::makecached(read<T>);
-    T t = readcache((LPVOID)addr);
+    T t = readcache<T>((LPVOID)addr);
 	return t;
 }
 int data = 100;
