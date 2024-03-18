@@ -56,7 +56,7 @@ makecached 函数模板
 最后，makecached 函数模板是一个方便的包装器，用于创建 CachedFunction 实例。它自动推导函数类型，并将函数包装为 std::function，然后调用 CachedFunctionFactory 来获取或创建一个缓存实例。
 ### 编译环境
 Visual Studio 2022
-项目使用C++20标准 
+项目使用C++14标准 
 
 ### 注意
 1. 凡是带有下划线的函数都是内部函数,建议不要直接调用 调用前请阅读源代码以避免理解错误
