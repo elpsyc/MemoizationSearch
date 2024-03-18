@@ -44,7 +44,7 @@ int main() {
     return 0;
 }
 /*
-#include "MemoizationSearch.h": 这行代码包含了MemoizationSearch.h头文件，我们假设这个头文件中定义了nonstd::makecached模板函数，用于创建函数的缓存版本。
+#include "MemoizationSearch.h": 这行代码包含了MemoizationSearch.h头文件，这个头文件中定义了nonstd::makecached模板函数，用于创建函数的缓存版本。
 
 #include <iostream>: 包含了标准输入输出流库，使得程序可以使用std::cout来输出信息到控制台。
 
