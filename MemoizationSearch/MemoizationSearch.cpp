@@ -30,13 +30,6 @@ int main() {
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
     std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparam() << std::endl;
-    std::cout << noparamlambda() << std::endl;
-    std::cout << noparamlambda() << std::endl;
-    std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
