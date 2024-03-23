@@ -103,8 +103,8 @@ namespace nonstd {
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> m_cache;
         template <typename R, typename... Args>
         static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) {
-            std::unique_lock<std::mutex> lock(m_mutex);
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
+            std::unique_lock<std::mutex> lock(m_mutex);//≤È—Ø≤ªº”À¯
             auto insertResult = funcMap.try_emplace(funcPtr, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
             return *std::static_pointer_cast<CachedFunction<R, Args...>>(insertResult.first->second);
         }
