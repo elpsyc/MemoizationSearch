@@ -60,12 +60,13 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
+        inline R operator()(Args&... args) const {
+            return this->operator()(args...);
+        }
         inline R operator()(Args&&... args) const{
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
-            if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
-            it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
             auto result = apply(m_func, argsTuple);
             std::unique_lock<std::mutex> lock(m_mutex);
