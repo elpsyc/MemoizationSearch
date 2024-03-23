@@ -32,17 +32,11 @@ namespace nonstd {
     template<size_t... Indices>struct index_sequence {};
     template<size_t N, size_t... Indices>struct make_index_sequence : make_index_sequence<N - 1, N - 1, Indices...> {};
     template<size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
-    template<typename F, typename Tuple, size_t... Indices>
-    auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {
+    template<typename F, typename Tuple, size_t... Indices>auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {
         return f(std::get<Indices>(std::forward<Tuple>(tuple))...);
     }
-    template<typename F, typename Tuple>
-    auto apply(F&& f, Tuple&& tuple) -> decltype(auto) {
-        return apply_impl(
-            std::forward<F>(f),
-            std::forward<Tuple>(tuple),
-            make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{}
-        );
+    template<typename F, typename Tuple>auto apply(F&& f, Tuple&& tuple) -> decltype(auto) {
+        return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});
     }
     constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
@@ -60,9 +54,7 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
-        inline R operator()(Args&... args) const {
-            return this->operator()(args...);
-        }
+        inline R operator()(Args&... args) const {return this->operator()(args...);}
         inline R operator()(Args&&... args) const{
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
