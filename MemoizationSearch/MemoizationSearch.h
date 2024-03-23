@@ -59,7 +59,7 @@ namespace nonstd {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
-            if (it != m_expiry.end() && it->second > now) return m_cache.at(argsTuple);
+            if (it != m_expiry.end() && it->second >= now) return m_cache.at(argsTuple);
             auto result = apply(m_func, argsTuple);
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache[argsTuple] = result;
