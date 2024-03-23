@@ -91,7 +91,7 @@ namespace nonstd {
             m_expiry = now + std::chrono::milliseconds(m_cacheTime);
             return m_cachedResult;
         }
-        inline void clearCache() noexcept { m_expiry = std::chrono::steady_clock::now(); }
+        inline void clearCache() noexcept { m_expiry = std::chrono::steady_clock::now()- std::chrono::milliseconds(m_cacheTime); }
     };
     template <typename F>struct function_traits : function_traits<decltype(&F::operator())> {};
     template <typename R, typename... Args>struct function_traits<R(*)(Args...)> {
