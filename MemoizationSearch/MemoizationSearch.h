@@ -19,21 +19,13 @@ private:
         return seed;
     }
 };
-namespace std {
-    template<typename... T>struct hash<std::tuple<T...>> {
-        size_t operator()(const std::tuple<T...>& t) const noexcept {return Hasher<T...>::hash_value(t);}
-    };
-}
+template<typename... T>struct std::hash<std::tuple<T...>> {size_t operator()(const std::tuple<T...>& t) const noexcept {return Hasher<T...>::hash_value(t);}};
 namespace nonstd {
     template<size_t... Indices>struct index_sequence {};
     template<size_t N, size_t... Indices>struct make_index_sequence : make_index_sequence<N - 1, N - 1, Indices...> {};
     template<size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
-    template<typename F, typename Tuple, size_t... Indices>auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {
-        return f(std::get<Indices>(std::forward<Tuple>(tuple))...);
-    }
-    template<typename F, typename Tuple>decltype(auto) apply(F&& f, Tuple&& tuple){
-        return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});
-    }
+    template<typename F, typename Tuple, size_t... Indices>auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
+    template<typename F, typename Tuple>decltype(auto) apply(F&& f, Tuple&& tuple){return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
     constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
         unsigned long m_cacheTime;
@@ -56,7 +48,7 @@ namespace nonstd {
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
             if (it != m_expiry.end() && it->second >= now) return m_cache.at(argsTuple);
-            auto result = apply(m_func, argsTuple);
+            auto result = nonstd::apply(m_func, argsTuple);
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache[argsTuple] = result;
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
@@ -115,9 +107,7 @@ namespace nonstd {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(&f, func, time);
     }
-    template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL) noexcept {
-        return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});
-    }
+    template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL) noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
 }
 #endif // !MEMOIZATIONSEARCH
 /*
