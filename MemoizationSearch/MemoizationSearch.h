@@ -15,17 +15,13 @@ private:
     template<typename Tuple, size_t... I>static size_t hash_impl(const Tuple& t, std::index_sequence<I...>) noexcept {
         size_t seed = 0;
         using expander = int[];
-        (void)expander {
-            0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...
-        };
+        (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};
         return seed;
     }
 };
 namespace std {
     template<typename... T>struct hash<std::tuple<T...>> {
-        size_t operator()(const std::tuple<T...>& t) const noexcept {
-            return Hasher<T...>::hash_value(t);
-        }
+        size_t operator()(const std::tuple<T...>& t) const noexcept {return Hasher<T...>::hash_value(t);}
     };
 }
 namespace nonstd {
@@ -35,7 +31,7 @@ namespace nonstd {
     template<typename F, typename Tuple, size_t... Indices>auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {
         return f(std::get<Indices>(std::forward<Tuple>(tuple))...);
     }
-    template<typename F, typename Tuple>auto apply(F&& f, Tuple&& tuple) -> decltype(auto) {
+    template<typename F, typename Tuple>decltype(auto) apply(F&& f, Tuple&& tuple){
         return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});
     }
     constexpr unsigned long g_CacheNormalTTL = 200;
@@ -66,7 +62,7 @@ namespace nonstd {
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
             return result;
         }
-        inline void clearArgsCache() {
+        inline void clearArgsCache() noexcept{
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(), m_expiry.clear(); 
         }
@@ -102,13 +98,13 @@ namespace nonstd {
         static std::mutex m_mutex;
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> m_cache;
         template <typename R, typename... Args>
-        static CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) {
+        static inline CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL)noexcept {
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
             std::unique_lock<std::mutex> lock(m_mutex);//≤È—Ø≤ªº”À¯
             auto insertResult = funcMap.try_emplace(funcPtr, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
             return *std::static_pointer_cast<CachedFunction<R, Args...>>(insertResult.first->second);
         }
-        void ClearCache() {
+        inline void ClearCache() noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(); 
         }
