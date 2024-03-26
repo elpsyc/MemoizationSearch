@@ -59,7 +59,6 @@ int main() {
     std::cout << noparamlambda() << std::endl;
     //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
-    //auto& noreturn= nonstd::makecached(foonoreturn);没有返回值的函数不支持缓存
     //读取内存的缓存版本
     std::cout << "data:" << ReadCache<int>((LPVOID)&data) << std::endl;
     std::cout << "cached data:" << ReadCache<int>((LPVOID)&data) << std::endl;
