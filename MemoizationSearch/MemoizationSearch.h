@@ -12,20 +12,20 @@ template<typename... T>
 struct Hasher {
     static inline  size_t hash_value(const std::tuple<T...>& t) noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
 private:
-    template<typename Tuple, size_t... I>static inline size_t hash_impl(const Tuple& t, std::index_sequence<I...>) noexcept {
+    template<typename Tuple, std::size_t... I>static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&) noexcept {
         size_t seed = 0;
         using expander = int[];
         (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};
         return seed;
     }
 };
-template<typename... T>struct std::hash<std::tuple<T...>> {size_t operator()(const std::tuple<T...>& t) const noexcept {return Hasher<T...>::hash_value(t);}};
+template<typename... T>struct std::hash<std::tuple<T...>> { std::size_t operator()(const std::tuple<T...>& t) const noexcept {return Hasher<T...>::hash_value(t);}};
 namespace nonstd {
-    template<size_t... Indices>struct index_sequence {};
-    template<size_t N, size_t... Indices>struct make_index_sequence : make_index_sequence<N - 1, N - 1, Indices...> {};
-    template<size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
-    template<typename F, typename Tuple, size_t... Indices>decltype(auto) inline apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
-    template<typename F, typename Tuple> inline decltype(auto) apply(F&& f, Tuple&& tuple)noexcept {return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
+    template<std::size_t... Indices>struct index_sequence {};
+    template<std::size_t N, std::size_t... Indices>struct make_index_sequence : make_index_sequence<N - 1, N - 1, Indices...> {};
+    template<std::size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
+    template<typename F, typename Tuple, std::size_t... Indices>decltype(auto) inline apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
+    template<typename F, typename Tuple> inline decltype(auto) apply(F&& f, Tuple&& tuple)noexcept {return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),nonstd::make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
     constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
         unsigned long m_cacheTime;
@@ -103,7 +103,7 @@ namespace nonstd {
     };
     std::mutex CachedFunctionFactory::m_mutex;
     decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
-    template<typename F, size_t... Is>inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>) noexcept {
+    template<typename F, std::size_t... Is>inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>) noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(&f, func, time);
     }
