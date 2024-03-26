@@ -14,6 +14,7 @@ DWORD64 Fibonacci(int n) {
 HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());
 template<typename T>
 T read(LPVOID addr) {
+    std::cout << "readapi called" << std::endl;
     T t{};
 	ReadProcessMemory(hProcess, (LPCVOID)addr, &t, sizeof(T), NULL);
 	return t;
@@ -64,6 +65,7 @@ int main() {
     //auto& noreturn= nonstd::makecached(foonoreturn);没有返回值的函数不支持缓存
     //读取内存的缓存版本
     std::cout << "data:" << ReadCache<int>((LPVOID)&data) << std::endl;
+    std::cout << "cached data:" << ReadCache<int>((LPVOID)&data) << std::endl;
     //在跨进程读取当中每一级偏移不用每次都去读取丢到缓存中就好了,比如说你读的是5级偏移,那么前4级偏移都可以丢到缓存中 最后一级偏移每次都去读取,这样就可以减少读取次数 默认缓存过期时间是200ms 这个时间可以自己设置 一般来说200ms人眼是感觉不到的,正常人的反应时间是250ms
     return 0;
 }

@@ -13,7 +13,7 @@ struct Hasher {
     static inline  size_t hash_value(const std::tuple<T...>& t) noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
 private:
     template<typename Tuple, std::size_t... I>static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&) noexcept {
-        size_t seed = 0;
+        std::size_t seed = 0;
         using expander = int[];
         (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};
         return seed;
