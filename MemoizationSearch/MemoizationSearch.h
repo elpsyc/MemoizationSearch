@@ -63,7 +63,7 @@ namespace nonstd {
         mutable std::function<R()> m_func;
         mutable R m_cachedResult;
         mutable std::chrono::steady_clock::time_point m_expiry;
-        CachedFunction(const std::function<R()>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
+        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         inline R operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry >= now) return m_cachedResult;
