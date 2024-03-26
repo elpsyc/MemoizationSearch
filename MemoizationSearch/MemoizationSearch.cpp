@@ -27,9 +27,6 @@ T ReadCache(LPVOID addr) {
 	return t;
 }
 int data = 100;
-void foonoreturn(int a) {
-
-}
 int main() {
     //有参数的lamda的缓存版本
     auto &cachedlambda = nonstd::makecached([](int a) {
