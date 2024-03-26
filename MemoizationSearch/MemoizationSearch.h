@@ -10,9 +10,9 @@
 #define MEMOIZATIONSEARCH
 template<typename... T>
 struct Hasher {
-    static size_t hash_value(const std::tuple<T...>& t) noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
+    static inline  size_t hash_value(const std::tuple<T...>& t) noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
 private:
-    template<typename Tuple, size_t... I>static size_t hash_impl(const Tuple& t, std::index_sequence<I...>) noexcept {
+    template<typename Tuple, size_t... I>static inline size_t hash_impl(const Tuple& t, std::index_sequence<I...>) noexcept {
         size_t seed = 0;
         using expander = int[];
         (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};
@@ -24,7 +24,7 @@ namespace nonstd {
     template<size_t... Indices>struct index_sequence {};
     template<size_t N, size_t... Indices>struct make_index_sequence : make_index_sequence<N - 1, N - 1, Indices...> {};
     template<size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
-    template<typename F, typename Tuple, size_t... Indices>auto apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) -> decltype(auto) {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
+    template<typename F, typename Tuple, size_t... Indices>decltype(auto) inline apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>) {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
     template<typename F, typename Tuple> inline decltype(auto) apply(F&& f, Tuple&& tuple)noexcept {return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
     constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
@@ -34,7 +34,7 @@ namespace nonstd {
         CachedFunctionBase(CachedFunctionBase&&) = delete;
         CachedFunctionBase& operator=(CachedFunctionBase&&) = delete;
         explicit CachedFunctionBase(unsigned long cacheTime = g_CacheNormalTTL) : m_cacheTime(cacheTime) {}
-        inline void setCacheTime(unsigned long cacheTime)noexcept { m_cacheTime = cacheTime; }
+        inline void setCacheTime(unsigned long cacheTime) noexcept { m_cacheTime = cacheTime; }
     };
     template<typename R, typename... Args>struct CachedFunction : public CachedFunctionBase {
         mutable std::function<R(Args...)> m_func;
@@ -42,8 +42,8 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
-        inline R operator()(Args&... args) const {return this->operator()(args...);}
-        inline R operator()(Args&&... args) const{
+        inline R operator()(Args&... args) const  noexcept {return this->operator()(args...);}
+        inline R operator()(Args&&... args) const noexcept{
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
@@ -63,7 +63,7 @@ namespace nonstd {
         mutable std::function<R()> m_func;
         mutable R m_cachedResult;
         mutable std::chrono::steady_clock::time_point m_expiry;
-        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
+        CachedFunction(const std::function<R()>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         inline R operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry >= now) return m_cachedResult;
@@ -96,7 +96,7 @@ namespace nonstd {
             auto insertResult = funcMap.try_emplace(funcPtr, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
             return *std::static_pointer_cast<CachedFunction<R, Args...>>(insertResult.first->second);
         }
-        inline void ClearCache() noexcept {
+        static inline void ClearCache() noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(); 
         }
