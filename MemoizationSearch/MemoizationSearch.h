@@ -92,7 +92,7 @@ namespace nonstd {
         template <typename R, typename... Args>
         static inline CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL)noexcept {
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
-            std::unique_lock<std::mutex> lock(m_mutex);//≤È—Ø≤ªº”À¯
+            std::unique_lock<std::mutex> lock(m_mutex);//Query unlocked
             auto insertResult = funcMap.try_emplace(funcPtr, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
             return *std::static_pointer_cast<CachedFunction<R, Args...>>(insertResult.first->second);
         }
