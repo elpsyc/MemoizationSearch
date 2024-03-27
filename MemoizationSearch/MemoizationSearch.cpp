@@ -1,6 +1,7 @@
 ﻿#include "MemoizationSearch.h"
 #include <iostream>
 #include <Windows.h>
+#include <stddef.h>
 int foo1() {
     std::cout << "foo1" << std::endl;
     return 36;
@@ -27,6 +28,42 @@ T ReadCache(LPVOID addr) {
 	return t;
 }
 int data = 100;
+uintptr_t Addressing(const std::vector<LPVOID>& offsets) {
+    uintptr_t addr = (uintptr_t)*offsets.begin();
+    //读取最后一级前一级的地址
+    for (auto it = offsets.begin() + 1; it != offsets.end(); ++it) {
+        addr = ((uintptr_t)ReadCache<uintptr_t>((LPVOID)((uintptr_t)(addr)+(uintptr_t)*it)));
+    }
+    return addr;
+}
+template<typename T>
+T ReadMemory(const std::vector<LPVOID>& offsets) {
+    //寻址得到最后一级之前的地址
+    auto addr = Addressing(offsets);
+    //读取最后一级的地址+偏移,最后一级等于寻址+最后一级偏移
+    auto realaddr = (LPVOID)((uintptr_t)ReadCache<LPVOID>((LPVOID)addr) + (uintptr_t)offsets.back());
+    return ReadCache<T>(realaddr);
+}
+class A {
+public:
+    BYTE PAD[100];
+    int data = 99;
+};
+class B {
+public:
+    BYTE PAD[0X12];
+    A* a;
+};
+class C {
+public:
+    BYTE PAD[0X32] ;
+    B* b;
+    C() {
+        b = new B();
+		b->a = new A();
+    }
+};
+C c;
 int main() {
     //有参数的lamda的缓存版本
     auto &cachedlambda = nonstd::makecached([](int a) {
@@ -62,23 +99,23 @@ int main() {
     //读取内存的缓存版本
     std::cout << "data:" << ReadCache<int>((LPVOID)&data) << std::endl;
     std::cout << "cached data:" << ReadCache<int>((LPVOID)&data) << std::endl;
-    //在跨进程读取当中每一级偏移不用每次都去读取丢到缓存中就好了,比如说你读的是5级偏移,那么前4级偏移都可以丢到缓存中 最后一级偏移每次都去读取,这样就可以减少读取次数 默认缓存过期时间是200ms 这个时间可以自己设置 一般来说200ms人眼是感觉不到的,正常人的反应时间是250ms
+    //声明3级指针打印出来的是地址并且读取
+    //宏获取偏移地址
+    
+    uintptr_t offsetB = ((uintptr_t)&c.b - (uintptr_t)&c);
+    std::cout << "offsetB:" << offsetB << std::endl;
+    std::vector<LPVOID> offsets = { (LPVOID)&c.b,(LPVOID)0x64 };
+    std::cout << "ReadMemory:" << ReadMemory<int>(offsets) << std::endl;
+    //In cross process reading, each level of offset does not need to be read and thrown into the cache every time.For example, if you are reading a 5th level offset, the first 4 levels of offset can be thrown into the cache, and the last level of offset can be read every time.This can reduce the number of reads.The default cache expiration time is 200ms, which can be set by yourself.Generally, 200ms is not noticeable to the human eye, and the normal reaction time is 250ms
     return 0;
 }
 /*
-#include "MemoizationSearch.h": 这行代码包含了MemoizationSearch.h头文件，这个头文件中定义了nonstd::makecached模板函数，用于创建函数的缓存版本。
-
-#include <iostream>: 包含了标准输入输出流库，使得程序可以使用std::cout来输出信息到控制台。
-
-定义了一个名为foo的函数，接受一个整型参数a，并返回这个参数。这个函数非常简单，仅用于演示。
-
-定义了一个名为foo1的函数，它不接受任何参数，输出"foo1"到控制台，并返回整数36。这个函数用于展示无参数函数的缓存。
-
-在main函数中：
-
-使用nonstd::makecached创建了一个名为cachedFoo的缓存版本的函数。这个缓存的函数是基于一个匿名函数（lambda表达式），它接受一个整型参数，输出"foo"到控制台，并返回该参数。
-使用nonstd::makecached创建了另一个名为noparam的缓存版本的foo1函数。
-std::cout << cachedFoo(35) << std::endl;: 调用cachedFoo函数并传递参数35，然后将返回的结果输出到控制台。由于cachedFoo是第一次被调用，所以它会输出"foo"并返回35。
-
-接下来的多个std::cout << noparam() << std::endl;行：重复调用noparam函数，并将返回的结果输出到控制台。由于noparam是foo1函数的缓存版本，理论上第一次调用它时会输出"foo1"并返回36。但随后的调用，如果nonstd::makecached实现了正确的缓存机制，应该不会再次输出"foo1"，只会直接返回缓存的结果36。
+include "MemoizationSearch.h": This line includes the MemoizationSearch.h header file, which defines the nonstd::makecached template function to create cached versions of functions.
+ #include <iostream>: Includes the standard input-output stream library, which allows the program to use std::cout to output information to the console.
+ Defines a function named foo that takes an integer parameter a and returns that parameter. This function is very simple and is only for demonstration purposes.
+ Defines a function named foo1 that takes no arguments and prints "foo1" to the console and returns the integer 36. This function is used to demonstrate caching of functions that take no arguments.
+ In the main function:
+ A cached version of the function named cachedFoo is created using nonstd::makecached. The cached function is based on an anonymous function (lambda expression) that takes an integer parameter and prints "foo" to the console and returns that parameter.
+ Another cached version of the foo1 function named noparam is created using nonstd::makecached. std::cout << cachedFoo(35) << std::endl; : Calls the cachedFoo function and passes it the argument 35, then prints the returned result to the console.Since cachedFoo is called the first time, it prints "foo" and returns 35.
+ The following multiple std::cout << noparam() << std::endl; lines: Repeatedly call the noparam function and print the returned result to the console.Since noparam is a cached version of the foo1 function, the first call to it should in theory print "foo1" and return 36.But subsequent calls, if nonstd::makecached implements the correct caching mechanism, should not print "foo1" again, but simply return the cached result 36.
 */
