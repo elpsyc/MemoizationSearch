@@ -43,6 +43,7 @@ int main() {
     });
     //有参数的lamda的缓存版本
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
+    Sleep(1000);
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     cachedlambda.SetCacheTime(300);
     std::cout << cachedlambda(35) << std::endl;//有参数的情况

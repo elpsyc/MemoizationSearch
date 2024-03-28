@@ -9,7 +9,7 @@
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
 template<typename... T>struct Hasher {
-    static inline  size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
+    static inline  std::size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
     template<typename Tuple, std::size_t... I>static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
         std::size_t seed = 0;
         using expander = int[];
@@ -45,7 +45,19 @@ namespace nonstd {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
-            if (it != m_expiry.end() && it->second >= now) return m_cache.at(argsTuple);
+            if (it != m_expiry.end() && it->second >= now) {
+                return m_cache.at(argsTuple);
+            }else {
+                for (auto it = m_expiry.begin(); it != m_expiry.end();) {
+                    if (it->second < now) {
+                        std::unique_lock<std::mutex> lock(m_mutex);
+                        m_cache.erase(it->first);
+                        m_expiry.erase(it++);
+                    }else {
+                        ++it;
+                    }
+                }
+            }
             auto result = nonstd::apply(m_func, argsTuple);
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache[argsTuple] = result;
