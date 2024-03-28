@@ -8,10 +8,8 @@
 #include <typeindex>
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
-template<typename... T>
-struct Hasher {
+template<typename... T>struct Hasher {
     static inline  size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
-private:
     template<typename Tuple, std::size_t... I>static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
         std::size_t seed = 0;
         using expander = int[];
@@ -103,11 +101,11 @@ namespace nonstd {
     };
     std::mutex CachedFunctionFactory::m_mutex;
     decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
-    template<typename F, std::size_t... Is> static inline auto& makecached_impl(F&& f, unsigned long time, std::index_sequence<Is...>)noexcept {
+    template<typename F, std::size_t... Is> static inline auto& makecached_impl(F&& f, unsigned long time,const std::index_sequence<Is...>&)noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(&f, func, time);
     }
-    template<typename F>static inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
+    template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
 }
 #endif // !MEMOIZATIONSEARCH
 /*
