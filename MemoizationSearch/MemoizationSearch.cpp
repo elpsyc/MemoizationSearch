@@ -44,7 +44,7 @@ int main() {
     //有参数的lamda的缓存版本
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
-    cachedlambda.clearArgsCache();//清除缓存
+    cachedlambda.ClearArgsCache();//清除缓存
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     //一个函数只会生成一个实例
     std::cout << &noparam << std::endl;//无参数的情况
@@ -56,7 +56,7 @@ int main() {
     //无参数lambda的缓存版本
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
-    noparamlambda.clearCache();//清除缓存
+    noparamlambda.ClearCache();//清除缓存
     std::cout << noparamlambda() << std::endl;
     //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
