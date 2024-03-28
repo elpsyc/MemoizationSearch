@@ -40,7 +40,7 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
-        inline R operator()(Args&... args) const  noexcept {return this->operator()(args...);}
+        inline R operator()(Args&... args) const  noexcept {return this->operator()(std::move(args)...);}
         inline R operator()(Args&&... args) const noexcept{
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
