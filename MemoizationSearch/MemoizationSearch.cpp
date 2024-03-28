@@ -27,43 +27,7 @@ T ReadCache(LPVOID addr) {
     T t = readcache<T>((LPVOID)addr);
 	return t;
 }
-int data = 100;
-uintptr_t Addressing(const std::vector<LPVOID>& offsets) {
-    uintptr_t addr = (uintptr_t)*offsets.begin();
-    //读取最后一级前一级的地址
-    for (auto it = offsets.begin() + 1; it != offsets.end(); ++it) {
-        addr = ((uintptr_t)ReadCache<uintptr_t>((LPVOID)((uintptr_t)(addr)+(uintptr_t)*it)));
-    }
-    return addr;
-}
-template<typename T>
-T ReadMemory(const std::vector<LPVOID>& offsets) {
-    //寻址得到最后一级之前的地址
-    auto addr = Addressing(offsets);
-    //读取最后一级的地址+偏移,最后一级等于寻址+最后一级偏移
-    auto realaddr = (LPVOID)((uintptr_t)ReadCache<LPVOID>((LPVOID)addr) + (uintptr_t)offsets.back());
-    return ReadCache<T>(realaddr);
-}
-class A {
-public:
-    BYTE PAD[100];
-    int data = 99;
-};
-class B {
-public:
-    BYTE PAD[0X12];
-    A* a;
-};
-class C {
-public:
-    BYTE PAD[0X32] ;
-    B* b;
-    C() {
-        b = new B();
-		b->a = new A();
-    }
-};
-C c;
+
 int main() {
     //有参数的lamda的缓存版本
     auto &cachedlambda = nonstd::makecached([](int a) {
@@ -96,16 +60,6 @@ int main() {
     std::cout << noparamlambda() << std::endl;
     //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
-    //读取内存的缓存版本
-    std::cout << "data:" << ReadCache<int>((LPVOID)&data) << std::endl;
-    std::cout << "cached data:" << ReadCache<int>((LPVOID)&data) << std::endl;
-    //声明3级指针打印出来的是地址并且读取
-    //宏获取偏移地址
-    
-    uintptr_t offsetB = ((uintptr_t)&c.b - (uintptr_t)&c);
-    std::cout << "offsetB:" << offsetB << std::endl;
-    std::vector<LPVOID> offsets = { (LPVOID)&c.b,(LPVOID)0x64 };
-    std::cout << "ReadMemory:" << ReadMemory<int>(offsets) << std::endl;
     //In cross process reading, each level of offset does not need to be read and thrown into the cache every time.For example, if you are reading a 5th level offset, the first 4 levels of offset can be thrown into the cache, and the last level of offset can be read every time.This can reduce the number of reads.The default cache expiration time is 200ms, which can be set by yourself.Generally, 200ms is not noticeable to the human eye, and the normal reaction time is 250ms
     return 0;
 }

@@ -34,7 +34,7 @@ namespace nonstd {
         CachedFunctionBase(CachedFunctionBase&&) = delete;
         CachedFunctionBase& operator=(CachedFunctionBase&&) = delete;
         explicit CachedFunctionBase(unsigned long cacheTime = g_CacheNormalTTL) : m_cacheTime(cacheTime) {}
-        inline void setCacheTime(unsigned long cacheTime) noexcept { m_cacheTime = cacheTime; }
+        inline void SetCacheTime(unsigned long cacheTime) noexcept { m_cacheTime = cacheTime; }
     };
     template<typename R, typename... Args>struct CachedFunction : public CachedFunctionBase {
         mutable std::function<R(Args...)> m_func;
@@ -54,7 +54,7 @@ namespace nonstd {
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
             return result;
         }
-        inline void clearArgsCache() noexcept{
+        inline void ClearArgsCache() noexcept{
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(), m_expiry.clear(); 
         }
@@ -71,7 +71,7 @@ namespace nonstd {
             m_expiry = now + std::chrono::milliseconds(m_cacheTime);
             return m_cachedResult;
         }
-        inline void clearCache() noexcept { m_expiry = std::chrono::steady_clock::now()- std::chrono::milliseconds(m_cacheTime); }
+        inline void ClearCache() noexcept { m_expiry = std::chrono::steady_clock::now()- std::chrono::milliseconds(m_cacheTime); }
     };
     template <typename F>struct function_traits : function_traits<decltype(&F::operator())> {};
     template <typename R, typename... Args>struct function_traits<R(*)(Args...)> {
