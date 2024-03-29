@@ -40,8 +40,8 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
-        inline R operator()(Args&... args) const  noexcept {return this->operator()(std::move(args)...);}
-        inline R operator()(Args&&... args) const noexcept{
+        inline R& operator()(Args&... args) const  noexcept {return this->operator()(std::move(args)...);}
+        inline R& operator()(Args&&... args) const noexcept {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
             auto it = m_expiry.find(argsTuple);
@@ -58,11 +58,10 @@ namespace nonstd {
                     }
                 }
             }
-            auto result = nonstd::apply(m_func, argsTuple);
+            auto result = m_cache.emplace(std::piecewise_construct,std::forward_as_tuple(argsTuple),std::forward_as_tuple(nonstd::apply(m_func, argsTuple)));
             std::unique_lock<std::mutex> lock(m_mutex);
-            m_cache[argsTuple] = result;
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
-            return result;
+            return result.first->second;
         }
         static inline void ClearArgsCache()noexcept{
             std::unique_lock<std::mutex> lock(m_mutex);
