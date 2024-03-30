@@ -13,7 +13,7 @@ template<typename... T>struct Hasher {
     template<typename Tuple, std::size_t... I>  static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
         std::size_t seed = 0;
         using expander = int[];
-        (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};
+        (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};//0x9e3779b9是黄金分割比例的16进制表示
         return seed;
     }
 };
