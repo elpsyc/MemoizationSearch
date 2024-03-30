@@ -48,7 +48,7 @@ int main() {
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     cachedlambda.SetCache(std::make_tuple(35, 99), 39);//设置缓存 第一个参数是参数元组 第二个参数是返回值
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
-    cachedlambda.ClearCache();//清除缓存
+    cachedlambda.ClearCache(35,99);//清除缓存
     std::cout << cachedlambda(35,99) << std::endl;//有参数的情况
     //一个函数只会生成一个实例
     std::cout << &noparam << std::endl;//无参数的情况
