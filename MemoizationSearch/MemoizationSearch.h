@@ -6,6 +6,10 @@
 #include <memory>
 #include <mutex>
 #include <typeindex>
+//如果c++版本小于c++14就报错
+#if _HAS_CXX17
+#error "c++14 required"
+#endif
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
 template<typename... T>struct Hasher {
@@ -113,7 +117,7 @@ namespace nonstd {
     decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
     template<typename F, std::size_t... Is> static inline auto& makecached_impl(F&& f, unsigned long time,const std::index_sequence<Is...>&)noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
-        return CachedFunctionFactory::GetCachedFunction(&f, func, time);
+        return CachedFunctionFactory::GetCachedFunction(&func, func, time);
     }
     template<typename F>inline auto& makecached(F&& f, unsigned long time = 200)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
 }
