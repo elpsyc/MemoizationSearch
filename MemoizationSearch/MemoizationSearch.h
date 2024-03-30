@@ -105,7 +105,7 @@ namespace nonstd {
         static inline CachedFunction<R, Args...>& GetCachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = 200)noexcept {
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
             std::unique_lock<std::mutex> lock(m_mutex);//Query unlocked
-            auto insertResult = funcMap.try_emplace(&func, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
+            auto insertResult = funcMap.try_emplace((void*)&func, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
             return *std::static_pointer_cast<CachedFunction<R, Args...>>(insertResult.first->second);
         }
         static inline void ClearCache()noexcept {
