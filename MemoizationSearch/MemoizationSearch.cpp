@@ -44,7 +44,7 @@ int main() {
         });
     //有参数的lamda的缓存版本
     cachedlambda.AddCache(std::make_tuple(35, 99), 35);//添加缓存 第一个参数是参数元组 第二个参数是返回值
-    std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
+    std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况因为设置了缓存为35 所以返回35
     Sleep(1000);
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     cachedlambda.SetCache(std::make_tuple(35, 99), 39);//设置缓存 第一个参数是参数元组 第二个参数是返回值
