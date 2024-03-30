@@ -80,6 +80,13 @@ namespace nonstd {
                 m_expiry.erase(it);
             }
         }
+        inline void SetCacheTime(const std::tuple<Args...>& parameters, unsigned long cacheTime) const noexcept {
+			std::unique_lock<std::mutex> lock(m_mutex);
+			auto it = m_expiry.find(parameters);
+			if (it != m_expiry.end()) {
+				it->second = std::chrono::steady_clock::now() + std::chrono::milliseconds(cacheTime);
+			}
+		}
     };
     template<typename R> struct CachedFunction<R> : public CachedFunctionBase {
         mutable std::function<R()> m_func;
