@@ -70,7 +70,7 @@ namespace nonstd {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(), m_expiry.clear();
         }
-        inline void ClearCache(Args&&... args) const noexcept {
+        inline void ClearCache(Args... args) const noexcept {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             std::unique_lock<std::mutex> lock(m_mutex);
             auto it = m_expiry.find(argsTuple);
