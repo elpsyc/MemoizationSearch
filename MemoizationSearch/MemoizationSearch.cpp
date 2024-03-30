@@ -46,7 +46,7 @@ int main() {
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     Sleep(1000);
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
-    cachedlambda.SetCache(std::make_tuple(35, 99), 39);
+    cachedlambda.SetCache(std::make_tuple(35, 99), 39);//设置缓存 第一个参数是参数元组 第二个参数是返回值
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     cachedlambda.ClearCache();//清除缓存
     std::cout << cachedlambda(35,99) << std::endl;//有参数的情况
@@ -61,7 +61,7 @@ int main() {
     //无参数lambda的缓存版本
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
-    noparamlambda.SetCache(38);
+    noparamlambda.SetCache(38);//设置缓存
     std::cout << noparamlambda() << std::endl;
     noparamlambda.ClearCache();//清除缓存
     std::cout << noparamlambda() << std::endl;
