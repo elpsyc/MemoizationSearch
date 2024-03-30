@@ -26,6 +26,7 @@ namespace nonstd {
     template<typename F, typename Tuple> inline decltype(auto) apply(F&& f, Tuple&& tuple)noexcept {return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),nonstd::make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
     struct CachedFunctionBase {
         unsigned long m_cacheTime;
+        mutable std::mutex m_mutex;
         CachedFunctionBase(const CachedFunctionBase&) = delete;
         CachedFunctionBase& operator=(const CachedFunctionBase&) = delete;
         CachedFunctionBase(CachedFunctionBase&&) = delete;
@@ -38,7 +39,6 @@ namespace nonstd {
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> m_cache;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
         explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = 200) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
-        mutable std::mutex m_mutex;
         inline R& operator()(Args&... args) const  noexcept {return this->operator()(std::move(args)...);}
         inline R& operator()(Args&&... args) const noexcept {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
@@ -50,16 +50,18 @@ namespace nonstd {
                 for (auto it = m_expiry.begin(); it != m_expiry.end();) {
                     if (it->second < now) {
                         std::unique_lock<std::mutex> lock(m_mutex);
-                        m_cache.erase(it->first);
-                        m_expiry.erase(it++);
+                        m_cache.erase(it->first), m_expiry.erase(it++);
                     }else {
                         ++it;
                     }
                 }
             }
-            auto result = m_cache.emplace(std::piecewise_construct,std::forward_as_tuple(argsTuple),std::forward_as_tuple(nonstd::apply(m_func, argsTuple)));
+            return AddCache(argsTuple, nonstd::apply(m_func, argsTuple));
+        }
+        inline R& AddCache(const std::tuple<Args...>& paramaters, const R& returnvalue) const noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
-            m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
+            auto result = m_cache.emplace(std::piecewise_construct, std::forward_as_tuple(paramaters), std::forward_as_tuple(returnvalue));
+            m_expiry[paramaters] = std::chrono::steady_clock::now() + std::chrono::milliseconds(m_cacheTime);
             return result.first->second;
         }
         inline void SetCache(const std::tuple<Args...>& parameters,const R& returnvalue) const noexcept {
@@ -75,17 +77,12 @@ namespace nonstd {
             auto argsTuple = std::make_tuple(args...);
             std::unique_lock<std::mutex> lock(m_mutex);
             auto it = m_expiry.find(argsTuple);
-            if (it != m_expiry.end()) {
-                m_cache.erase(it->first);
-                m_expiry.erase(it);
-            }
+            if (it != m_expiry.end()) m_cache.erase(it->first), m_expiry.erase(it);
         }
         inline void SetCacheTime(const std::tuple<Args...>& parameters, unsigned long cacheTime) const noexcept {
 			std::unique_lock<std::mutex> lock(m_mutex);
 			auto it = m_expiry.find(parameters);
-			if (it != m_expiry.end()) {
-				it->second = std::chrono::steady_clock::now() + std::chrono::milliseconds(cacheTime);
-			}
+			if (it != m_expiry.end())it->second = std::chrono::steady_clock::now() + std::chrono::milliseconds(cacheTime);
 		}
     };
     template<typename R> struct CachedFunction<R> : public CachedFunctionBase {
@@ -97,7 +94,9 @@ namespace nonstd {
         inline R& operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry >= now) return m_cachedResult;
-            m_cachedResult = m_func();
+            auto result = m_func();
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_cachedResult = result;
             m_expiry = now + std::chrono::milliseconds(m_cacheTime);
             return m_cachedResult;
         }

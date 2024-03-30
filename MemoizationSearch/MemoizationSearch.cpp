@@ -43,6 +43,7 @@ int main() {
         return 37;
         });
     //有参数的lamda的缓存版本
+    cachedlambda.AddCache(std::make_tuple(35, 99), 35);
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     Sleep(1000);
     std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
