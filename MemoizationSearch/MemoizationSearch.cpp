@@ -44,7 +44,7 @@ int main() {
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     Sleep(1000);
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
-    cachedlambda.SetCacheTime(300);
+    cachedlambda.ClearCache(35);
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     //一个函数只会生成一个实例
     std::cout << &noparam << std::endl;//无参数的情况

@@ -66,9 +66,18 @@ namespace nonstd {
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
             return result.first->second;
         }
-        static inline void ClearArgsCache()noexcept{
+        inline void ClearCache() const noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
-            m_cache.clear(), m_expiry.clear(); 
+            m_cache.clear(), m_expiry.clear();
+        }
+        inline void ClearCache(Args&&... args) const noexcept {
+            auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
+            std::unique_lock<std::mutex> lock(m_mutex);
+            auto it = m_expiry.find(argsTuple);
+            if (it != m_expiry.end()) {
+                m_cache.erase(it->first);
+                m_expiry.erase(it);
+            }
         }
     };
     template<typename R> struct CachedFunction<R> : public CachedFunctionBase {
