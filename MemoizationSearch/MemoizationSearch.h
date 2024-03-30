@@ -24,21 +24,20 @@ namespace nonstd {
     template<std::size_t... Indices>struct make_index_sequence<0, Indices...> : index_sequence<Indices...> {};
     template<typename F, typename Tuple, std::size_t... Indices>decltype(auto) inline apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>)noexcept {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
     template<typename F, typename Tuple> inline decltype(auto) apply(F&& f, Tuple&& tuple)noexcept {return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),nonstd::make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
-    constexpr unsigned long g_CacheNormalTTL = 200;
     struct CachedFunctionBase {
         unsigned long m_cacheTime;
         CachedFunctionBase(const CachedFunctionBase&) = delete;
         CachedFunctionBase& operator=(const CachedFunctionBase&) = delete;
         CachedFunctionBase(CachedFunctionBase&&) = delete;
         CachedFunctionBase& operator=(CachedFunctionBase&&) = delete;
-        explicit CachedFunctionBase(unsigned long cacheTime = g_CacheNormalTTL) : m_cacheTime(cacheTime) {}
+        explicit CachedFunctionBase(unsigned long cacheTime = 200) : m_cacheTime(cacheTime) {}
         inline void SetCacheTime(unsigned long cacheTime) noexcept { m_cacheTime = cacheTime; }
     };
     template<typename R, typename... Args>struct CachedFunction : public CachedFunctionBase {
         mutable std::function<R(Args...)> m_func;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, R> m_cache;
         mutable std::unordered_map<std::tuple<std::decay_t<Args>...>, std::chrono::steady_clock::time_point> m_expiry;
-        explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
+        explicit CachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = 200) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         mutable std::mutex m_mutex;
         inline R& operator()(Args&... args) const  noexcept {return this->operator()(std::move(args)...);}
         inline R& operator()(Args&&... args) const noexcept {
@@ -72,7 +71,7 @@ namespace nonstd {
         mutable std::function<R()> m_func;
         mutable R m_cachedResult;
         mutable std::chrono::steady_clock::time_point m_expiry;
-        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = g_CacheNormalTTL) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
+        explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = 200) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
         inline R& operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry >= now) return m_cachedResult;
@@ -99,7 +98,7 @@ namespace nonstd {
         static std::mutex m_mutex;
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> m_cache;
         template <typename R, typename... Args>
-        static inline CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = g_CacheNormalTTL)noexcept {
+        static inline CachedFunction<R, Args...>& GetCachedFunction(void* funcPtr, const std::function<R(Args...)>& func, unsigned long cacheTime = 200)noexcept {
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
             std::unique_lock<std::mutex> lock(m_mutex);//Query unlocked
             auto insertResult = funcMap.try_emplace(funcPtr, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
@@ -116,7 +115,7 @@ namespace nonstd {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(&f, func, time);
     }
-    template<typename F>inline auto& makecached(F&& f, unsigned long time = g_CacheNormalTTL)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
+    template<typename F>inline auto& makecached(F&& f, unsigned long time = 200)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
 }
 #endif // !MEMOIZATIONSEARCH
 /*
