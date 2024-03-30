@@ -62,7 +62,11 @@ namespace nonstd {
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
             return result.first->second;
         }
-        inline void operator=(const std::pair<Args..., R>& args) const noexcept {m_cache[args.first] = args.second;}
+        inline void SetCache(const std::tuple<Args...>& parameters,const R& returnvalue) const noexcept {
+            std::unique_lock<std::mutex> lock(m_mutex);
+			m_cache[parameters] = returnvalue;
+			m_expiry[parameters] = std::chrono::steady_clock::now() + std::chrono::milliseconds(m_cacheTime);
+        }
         inline void ClearCache() const noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(), m_expiry.clear();
@@ -82,7 +86,7 @@ namespace nonstd {
         mutable R m_cachedResult;
         mutable std::chrono::steady_clock::time_point m_expiry;
         explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = 200) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
-        inline void operator=(const R& value)const noexcept {m_cachedResult = value;}
+        inline void SetCache (const R& value)const noexcept {m_cachedResult = value;}
         inline R& operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry >= now) return m_cachedResult;

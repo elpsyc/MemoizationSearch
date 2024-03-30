@@ -31,25 +31,25 @@ T ReadCache(LPVOID addr) {
 }
 int main() {
     //有参数的lamda的缓存版本
-    auto &cachedlambda = nonstd::makecached([](int a) {
+    auto& cachedlambda = nonstd::makecached([](int a, int b) {
         std::cout << "foo" << std::endl;
-        return a;
-    });
+        return a + b;
+        });
     //无参数的函数的缓存版本
     auto& noparam = nonstd::makecached(foo1);
     auto& noparam2 = nonstd::makecached(foo1);
     auto& noparamlambda = nonstd::makecached([]() {
         std::cout << "noparamlambda" << std::endl;
         return 37;
-    });
+        });
     //有参数的lamda的缓存版本
-    std::cout << cachedlambda(35) << std::endl;//有参数的情况
+    std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     Sleep(1000);
-    std::cout << cachedlambda(35) << std::endl;//有参数的情况
-    cachedlambda=std::make_pair(35, 39);//修改缓存
-    std::cout << cachedlambda(35) << std::endl;//有参数的情况
+    std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
+    cachedlambda.SetCache(std::make_tuple(35, 99), 39);
+    std::cout << cachedlambda(35, 99) << std::endl;//有参数的情况
     cachedlambda.ClearCache();//清除缓存
-    std::cout << cachedlambda(35) << std::endl;//有参数的情况
+    std::cout << cachedlambda(35,99) << std::endl;//有参数的情况
     //一个函数只会生成一个实例
     std::cout << &noparam << std::endl;//无参数的情况
     std::cout << &noparam2 << std::endl;//地址相同实例只有一个
@@ -61,7 +61,7 @@ int main() {
     //无参数lambda的缓存版本
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
-    noparamlambda=38;//修改缓存
+    noparamlambda.SetCache(38);
     std::cout << noparamlambda() << std::endl;
     noparamlambda.ClearCache();//清除缓存
     std::cout << noparamlambda() << std::endl;
