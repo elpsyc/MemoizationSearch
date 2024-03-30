@@ -61,19 +61,7 @@ int main() {
     std::cout << noparamlambda() << std::endl;
     //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
-#if __cplusplus >= 201703L
-    // 如果编译器支持C++17或更高版本
-    std::cout << "C++17 or later";
-#elif __cplusplus >= 201402L
-    // 如果编译器支持C++14
-    std::cout << "C++14";
-#elif __cplusplus >= 201103L
-    // 如果编译器支持C++11
-    std::cout << "C++11";
-#else
-    // 如果编译器支持的是更早的C++版本
-    std::cout << "Old C++ version";
-#endif
+    //nonstd::makecached(foo1);//Warnning for ignore return value
     //In cross process reading, each level of offset does not need to be read and thrown into the cache every time.For example, if you are reading a 5th level offset, the first 4 levels of offset can be thrown into the cache, and the last level of offset can be read every time.This can reduce the number of reads.The default cache expiration time is 200ms, which can be set by yourself.Generally, 200ms is not noticeable to the human eye, and the normal reaction time is 250ms
     return 0;
 }
