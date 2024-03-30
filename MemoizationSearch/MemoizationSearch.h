@@ -6,15 +6,11 @@
 #include <memory>
 #include <mutex>
 #include <typeindex>
-//如果c++版本小于c++14就报错
-#if _HAS_CXX17
-#error "c++14 required"
-#endif
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
 template<typename... T>struct Hasher {
-    [[nodiscard]] static inline  std::size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
-    template<typename Tuple, std::size_t... I> [[nodiscard]] static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
+    static inline  std::size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
+    template<typename Tuple, std::size_t... I>  static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
         std::size_t seed = 0;
         using expander = int[];
         (void)expander {0, ((seed ^= std::hash<typename std::tuple_element<I, Tuple>::type>{}(std::get<I>(t)) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), 0)...};
@@ -66,6 +62,7 @@ namespace nonstd {
             m_expiry[argsTuple] = now + std::chrono::milliseconds(m_cacheTime);
             return result.first->second;
         }
+        inline void operator=(const std::pair<Args..., R>& args) const noexcept {m_cache[args.first] = args.second;}
         inline void ClearCache() const noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cache.clear(), m_expiry.clear();
@@ -85,6 +82,7 @@ namespace nonstd {
         mutable R m_cachedResult;
         mutable std::chrono::steady_clock::time_point m_expiry;
         explicit CachedFunction(const std::function<R()>& func, unsigned long cacheTime = 200) : CachedFunctionBase(cacheTime), m_func(std::move(func)) {}
+        inline void operator=(const R& value)const noexcept {m_cachedResult = value;}
         inline R& operator()() const noexcept {
             auto now = std::chrono::steady_clock::now();
             if (m_expiry >= now) return m_cachedResult;
@@ -111,7 +109,7 @@ namespace nonstd {
         static std::mutex m_mutex;
         static std::unordered_map<std::type_index, std::unordered_map<void*, std::shared_ptr<void>>> m_cache;
         template <typename R, typename... Args>
-        [[nodiscard]]static inline CachedFunction<R, Args...>& GetCachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = 200)noexcept {
+        static inline CachedFunction<R, Args...>& GetCachedFunction(const std::function<R(Args...)>& func, unsigned long cacheTime = 200)noexcept {
             auto& funcMap = m_cache[std::type_index(typeid(CachedFunction<R, Args...>))];
             std::unique_lock<std::mutex> lock(m_mutex);//Query unlocked
             auto insertResult = funcMap.try_emplace((void*)&func, std::make_shared<CachedFunction<R, Args...>>(func, cacheTime));
@@ -124,11 +122,11 @@ namespace nonstd {
     };
     std::mutex CachedFunctionFactory::m_mutex;
     decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
-    template<typename F, std::size_t... Is> [[nodiscard]] static inline auto& makecached_impl(F&& f, unsigned long time,const std::index_sequence<Is...>&)noexcept {
+    template<typename F, std::size_t... Is>  static inline auto& makecached_impl(F&& f, unsigned long time,const std::index_sequence<Is...>&)noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
         return CachedFunctionFactory::GetCachedFunction(func, time);
     }
-    template<typename F> [[nodiscard]] inline auto& makecached(F&& f, unsigned long time = 200)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
+    template<typename F>  inline auto& makecached(F&& f, unsigned long time = 200)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
 }
 #endif // !MEMOIZATIONSEARCH
 /*

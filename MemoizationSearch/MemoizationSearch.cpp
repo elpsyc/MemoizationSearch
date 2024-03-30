@@ -2,6 +2,8 @@
 #include <iostream>
 #include <Windows.h>
 #include <stddef.h>
+#define FMT_HEADER_ONLY
+#include<fmt/printf.h>
 int foo1() {
     std::cout << "foo1" << std::endl;
     return 36;
@@ -12,7 +14,7 @@ DWORD64 Fibonacci(int n) {
     if (n <= 1) return n;
     return fib(n - 1) + fib(n - 2);
 }
-HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());
+HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());//获取进程句柄
 template<typename T>
 T read(LPVOID addr) {
     std::cout << "readapi called" << std::endl;
@@ -44,7 +46,9 @@ int main() {
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     Sleep(1000);
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
-    cachedlambda.ClearCache(35);
+    cachedlambda=std::make_pair(35, 39);//修改缓存
+    std::cout << cachedlambda(35) << std::endl;//有参数的情况
+    cachedlambda.ClearCache();//清除缓存
     std::cout << cachedlambda(35) << std::endl;//有参数的情况
     //一个函数只会生成一个实例
     std::cout << &noparam << std::endl;//无参数的情况
@@ -57,10 +61,13 @@ int main() {
     //无参数lambda的缓存版本
     std::cout << noparamlambda() << std::endl;
     std::cout << noparamlambda() << std::endl;
+    noparamlambda=38;//修改缓存
+    std::cout << noparamlambda() << std::endl;
     noparamlambda.ClearCache();//清除缓存
     std::cout << noparamlambda() << std::endl;
     //斐波那契数列的缓存版本
     std::cout << Fibonacci(256) << std::endl;
+    
     //nonstd::makecached(foo1);//Warnning for ignore return value
     //In cross process reading, each level of offset does not need to be read and thrown into the cache every time.For example, if you are reading a 5th level offset, the first 4 levels of offset can be thrown into the cache, and the last level of offset can be read every time.This can reduce the number of reads.The default cache expiration time is 200ms, which can be set by yourself.Generally, 200ms is not noticeable to the human eye, and the normal reaction time is 250ms
     return 0;
