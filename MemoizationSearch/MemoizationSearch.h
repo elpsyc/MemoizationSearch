@@ -43,21 +43,24 @@ namespace nonstd {
         inline R& operator()(Args&&... args) const noexcept {
             auto argsTuple = std::make_tuple(std::forward<Args>(args)...);
             auto now = std::chrono::steady_clock::now();
-            auto it = m_expiry.find(argsTuple);
+            auto it = m_expiry.find(argsTuple);//在m_expiry中查找argsTuple
             if (it != m_expiry.end() && it->second >= now) {
-                return m_cache.at(argsTuple);
+                return m_cache.at(argsTuple);//返回m_cache中argsTuple对应的值
             }else {
-                for (auto it = m_expiry.begin(); it != m_expiry.end();) {
-                    if (it->second < now) {
-                        std::unique_lock<std::mutex> lock(m_mutex);
-                        m_cache.erase(it->first), m_expiry.erase(it++);
-                    }else {
-                        ++it;
-                    }
-                }
+                ClearExpireCache(now);
             }
             return AddCache(argsTuple, nonstd::apply(m_func, argsTuple));
         }
+        inline void ClearExpireCache(const std::chrono::steady_clock::time_point& now) const noexcept {
+			for (auto it = m_expiry.begin(); it != m_expiry.end();) {
+				if (it->second < now) {
+					std::unique_lock<std::mutex> lock(m_mutex);
+					m_cache.erase(it->first), m_expiry.erase(it++);
+				}else {
+					++it;
+				}
+			}
+		}
         inline R& AddCache(const std::tuple<Args...>& paramaters, const R& returnvalue) const noexcept {
             std::unique_lock<std::mutex> lock(m_mutex);
             auto result = m_cache.emplace(std::piecewise_construct, std::forward_as_tuple(paramaters), std::forward_as_tuple(returnvalue));
