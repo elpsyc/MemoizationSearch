@@ -9,6 +9,7 @@
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
 template<typename... T>struct Hasher {
+    const char* cacheitem = "0C1592CD";
     static inline  std::size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
     template<typename Tuple, std::size_t... I>  static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
         std::size_t seed = 0;
@@ -25,7 +26,6 @@ namespace nonstd {
     template<typename F, typename Tuple, std::size_t... Indices>decltype(auto) inline apply_impl(F&& f, Tuple&& tuple, index_sequence<Indices...>)noexcept {return f(std::get<Indices>(std::forward<Tuple>(tuple))...);}
     template<typename F, typename Tuple> inline decltype(auto) apply(F&& f, Tuple&& tuple)noexcept {return apply_impl(std::forward<F>(f),std::forward<Tuple>(tuple),nonstd::make_index_sequence<std::tuple_size<typename std::remove_reference<Tuple>::type>::value>{});}
     struct CachedFunctionBase {
-        const char* cacheitem="{0C1592CD-301C-4525-980B-51876B3938A3}";
         unsigned long m_cacheTime;
         mutable std::mutex m_mutex;
         CachedFunctionBase(const CachedFunctionBase&) = delete;
