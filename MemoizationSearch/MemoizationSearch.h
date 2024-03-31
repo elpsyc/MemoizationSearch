@@ -135,11 +135,11 @@ namespace nonstd {
     };
     std::mutex CachedFunctionFactory::m_mutex;
     decltype(CachedFunctionFactory::m_cache) CachedFunctionFactory::m_cache;
-    template<typename F, std::size_t... Is>  static inline auto& makecached_impl(F&& f, unsigned long time,const std::index_sequence<Is...>&)noexcept {
+    template<typename F, std::size_t... Is>  static inline auto& makecached_impl(F&& f, unsigned long validtime,const std::index_sequence<Is...>&)noexcept {
         std::function<typename function_traits<std::decay_t<F>>::return_type(typename std::tuple_element<Is, typename function_traits<std::decay_t<F>>::args_tuple_type>::type...)> func(std::forward<F>(f));
-        return CachedFunctionFactory::GetCachedFunction(func, time);
+        return CachedFunctionFactory::GetCachedFunction(func, validtime);
     }
-    template<typename F>  inline auto& makecached(F&& f, unsigned long time = 200)noexcept {return makecached_impl(f, time, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
+    template<typename F>  inline auto& makecached(F&& f, unsigned long validtime = 200)noexcept {return makecached_impl(f, validtime, std::make_index_sequence<std::tuple_size<typename function_traits<std::decay_t<F>>::args_tuple_type>::value>{});}
 }
 #endif // !MEMOIZATIONSEARCH
 /*
