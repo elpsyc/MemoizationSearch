@@ -8,7 +8,7 @@
 #include <typeindex>
 #ifndef MEMOIZATIONSEARCH
 #define MEMOIZATIONSEARCH
-unsigned int rootseed = 0x0C1592CD;
+unsigned int rootseed = 0x92E2194B;
 template<typename... T>struct Hasher {
     static inline  std::size_t hash_value(const std::tuple<T...>& t)noexcept {return hash_impl(t, std::index_sequence_for<T...>{});}
     template<typename Tuple, std::size_t... I>  static inline std::size_t hash_impl(const Tuple& t,const std::index_sequence<I...>&)noexcept {
